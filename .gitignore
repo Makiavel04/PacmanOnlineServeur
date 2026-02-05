@@ -1,0 +1,16 @@
+# --- Compilation ---
+# Ignore le dossier bin qui contient les fichiers .class
+/bin/
+
+# --- Bibliothèques ---
+# Ignore les dépendances externes (souvent gérées à part ou via un outil de build)
+/lib/
+
+# --- IDE (VS Code) ---
+# Ignore les configurations personnelles de l'éditeur
+/.vscode/
+
+# --- Divers ---
+# Ignore les logs ou fichiers temporaires du système
+*.log
+.DS_Store
