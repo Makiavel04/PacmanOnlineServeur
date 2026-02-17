@@ -1,3 +1,4 @@
+package Client;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -20,32 +21,21 @@ public class ClientListener extends Thread {
     @Override
     public void run() {
         System.out.println("ClientListener thread started");
-        while(true) {
-            try {
+        try {
+            while(true) {
                 String line = bReader.readLine();
                 if (line==null) break;
                 JSONObject objReq = new JSONObject(line);
                 String action = objReq.getString("action");
-                switch (action) {
-                    case ("demanderAuthentification"):
-                        break;
-                    case("demanderPartie"):
-                        break;
-                    case ("envoyerAction"):
-                        break;
-                    default:
-                        break;
-                }
+                this.clientHandler.gestionReception(action, objReq);
             }
-            catch (IOException | JSONException e) {
-                e.printStackTrace();
-            }
+        clientHandler.fermerConnection();
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
         }
-        clientHandler.closeConnexion();
-
     }
 
-    public void openConnexion() throws IOException {
+    public void ouvrirConnection() throws IOException {
         try {
             bReader = new BufferedReader(new InputStreamReader(so.getInputStream()));
         }
