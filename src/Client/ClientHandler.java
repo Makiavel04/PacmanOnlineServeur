@@ -5,7 +5,7 @@ import java.net.Socket;
 import org.json.JSONObject;
 
 import Controller.ServerController;
-import Match.MatchThread;
+import Partie.Lobby;
 
 public class ClientHandler {
 
@@ -61,9 +61,13 @@ public class ClientHandler {
                 System.out.println("Client " + this.getID() + " demande d'authentification");
                 this.demanderAuthentification(objReq);
                 break;
+            case ("demanderListeLobbies"):
+                System.out.println("Client " + this.getID() + " demande la liste des lobbies");
+                this.listerLobbies();
+                break;
             case("demanderPartie"):
                 System.out.println("Client " + this.getID() + " demande une partie");
-                this.demanderMatch();
+                this.demanderMatch(objReq);
                 break;
             case ("envoyerAction"):
                 break;
@@ -83,13 +87,19 @@ public class ClientHandler {
         this.issuer.envoyerRequete(objResp.toString());
     }
 
-    public void demanderMatch() {
+    public void listerLobbies() {
+        JSONObject objResp = this.serverController.listerLobbies();
+        this.issuer.envoyerRequete(objResp.toString());
+    }
+
+    public void demanderMatch(JSONObject objReq) {
         JSONObject objResp = new JSONObject();
         objResp.put("action", "reponseDemandePartie");
         try {
-            MatchThread match = this.serverController.demandeDeMatch(this);
-            objResp.put("idMatch", match.getID());
-            System.out.println("Client: " + idClient + " connected to match: " + match.getID());
+            int idLobby = objReq.getInt("idLobby");
+            Lobby lobby = this.serverController.demandeDeMatch(this, idLobby);
+            objResp.put("idMatch", lobby.getID());
+            System.out.println("Client: " + idClient + " connected to match: " + lobby.getID());
 
         }catch (Exception e) {
             System.out.println("No match found for client: " + idClient);

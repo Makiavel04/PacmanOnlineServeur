@@ -1,24 +1,26 @@
 package Controller;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Vector;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import Client.ClientHandler;
-import Match.MatchThread;
+import Partie.Lobby;
 
 public class ServerController {
     private int port;
     private ServerSocket ecoute;
     private Vector<ClientHandler> clients;
-    private Vector<MatchThread> matches;
+    private Vector<Lobby> lobbies;
 
     public ServerController(int p){
         this.port = p;
         this.clients = new Vector<ClientHandler>();
-        this.matches = new Vector<MatchThread>();
+        this.lobbies = new Vector<Lobby>();
         System.out.println("Server set up");
     } 
 
@@ -38,54 +40,76 @@ public class ServerController {
             System.out.println("Problem\n"+ e);
         }
     }
+    
+    public boolean demandeAuthentification(String username, String password) {
+        return true;
+    }
 
-    public synchronized MatchThread demandeDeMatch(ClientHandler client) throws Exception {
+    public JSONObject listerLobbies(){
+        JSONObject infosLobbies = new JSONObject();
+        infosLobbies.put("action", "reponseListeLobbies");
+
+        JSONArray lobbiesArray = new JSONArray();
+        for(Lobby lobby : lobbies) {
+            lobbiesArray.put(lobby.getInfosLobby().toJSON());
+        }
+        infosLobbies.put("lobbies", lobbiesArray);
+        return infosLobbies;
+    }
+
+    public synchronized Lobby demandeDeMatch(ClientHandler client, int idLobby) throws Exception {
         try{
-            MatchThread matchFound = this.trouverMatchAvecPlace();
-            if (matchFound == null) {
-                matchFound = this.creerMatch(client);
-            } 
-            this.connectionMatch(client, matchFound);
-            return matchFound;
+            Lobby lobbyFound;
+            if(idLobby == -1) {
+                lobbyFound = this.creerLobby(client);
+            }else{
+                lobbyFound = this.getLobby(idLobby);
+                if (lobbyFound == null) {
+                    throw new Exception("Lobby with ID " + idLobby + " not found.");
+                }
+            }
+            this.connectionLobby(client, lobbyFound);
+            return lobbyFound;
         } catch (Exception e) {
-            System.out.println("Error handling match request: " + e.getMessage());
+            System.out.println("Error handling lobby request: " + e.getMessage());
             throw e;
         }
 
     }
 
-    public void verifierLancementMatch(int idMatch) {
-        MatchThread match = this.getMatch(idMatch);
-        if (match != null && match.isFilled() && (match.getState() == Thread.State.NEW)) {
-            match.lancerPartie();
-            System.out.println("Match: " + idMatch + " started successfully");
+    public void verifierLancementMatch(int idLobby) {
+        Lobby lobby = this.getLobby(idLobby);
+        if (lobby != null && lobby.isFilled()) {
+            lobby.lancerPartie();
+            System.out.println("Lobby: " + idLobby + " started successfully");
         } else {
-            System.out.println("Match: " + idMatch + " cannot be started. Not found or not filled.");
+            if(lobby==null) System.out.println("Lobby: " + idLobby + " cannot be started. Not found.");
+            else if(!lobby.isFilled()) System.out.println("Lobby: " + idLobby + " cannot be started. Not filled.");
         }
     }
 
-    public MatchThread trouverMatchAvecPlace () {
-        for (int i = 0; i < matches.size(); i++) {
-            MatchThread match = matches.get(i);
-            if (!match.isFilled()) {
-                return match;
+    public Lobby trouverLobbyAvecPlace () {
+        for (int i = 0; i < lobbies.size(); i++) {
+            Lobby lobby = lobbies.get(i);
+            if (!lobby.isFilled()) {
+                return lobby;
             }
         }
         return null;
     }
 
-    public MatchThread creerMatch (ClientHandler client) {
-        MatchThread match = new MatchThread(client);
-        matches.add(match);
-        return match;
+    public Lobby creerLobby (ClientHandler client) {
+        Lobby lobby = new Lobby(client, this);
+        lobbies.add(lobby);
+        return lobby;
     }
 
-    public synchronized void connectionMatch (ClientHandler client, MatchThread match) throws Exception {
+    public synchronized void connectionLobby (ClientHandler client, Lobby lobby) throws Exception {
         try{
-            match.connectClient(client);
-            System.out.println("Client: " + client.getID() +"successfully connected to match: "+ match.getID());
+            lobby.connectClient(client);
+            System.out.println("Client: " + client.getID() +"successfully connected to lobby: "+ lobby.getID());
         } catch (Exception e) {
-            System.out.println("Error connecting client to match: " + e.getMessage());
+            System.out.println("Error connecting client to lobby: " + e.getMessage());
             throw e;
         }
     }
@@ -99,10 +123,10 @@ public class ServerController {
         return null;
     }
 
-    public MatchThread getMatch(int idMatch) {
-        for (int i = 0; i < matches.size(); i++) {
-            if (matches.get(i).getID() == idMatch) {
-                return matches.get(i);
+    public Lobby getLobby(int idLobby) {
+        for (int i = 0; i < lobbies.size(); i++) {
+            if (lobbies.get(i).getID() == idLobby) {
+                return lobbies.get(i);
             }        
         }
         return null;
@@ -118,7 +142,4 @@ public class ServerController {
         }
     }
 
-    public boolean demandeAuthentification(String username, String password) {
-        return true;
     }
-}
