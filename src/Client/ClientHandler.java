@@ -6,6 +6,8 @@ import org.json.JSONObject;
 
 import Controller.ServerController;
 import Partie.Lobby;
+import Ressources.DetailsClient;
+import Ressources.RequetesJSON;
 
 public class ClientHandler {
 
@@ -15,6 +17,7 @@ public class ClientHandler {
     private ClientListener listener;
     private ClientIssuer issuer;
     private Socket so;
+    String username;
 
     public ClientHandler(Socket so, ServerController sc) {
         this.idClient = ClientHandler.idCpt++;
@@ -27,6 +30,17 @@ public class ClientHandler {
 
     public int getID() {
         return this.idClient;
+    }
+    
+    public String getUsername() {
+        return this.username;
+    }
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public DetailsClient getDetailsClient() {
+        return new DetailsClient(this.idClient, this.username);
     }
 
     public void ouvrirConnection() throws IOException {
@@ -47,6 +61,8 @@ public class ClientHandler {
     public void fermerConnection() {
         try {
             so.close(); 
+            this.listener.interrupt();
+            this.issuer.interrupt();
             System.out.println("Connection with client: " + idClient + " closed");
 
         } 
@@ -55,19 +71,23 @@ public class ClientHandler {
         }
     }
 
-    public void gestionReception(String action, org.json.JSONObject objReq) {
+    public void gestionReception(String action, JSONObject objReq) {
         switch (action) {
-            case ("demanderAuthentification"):
+            case (RequetesJSON.ASK_AUTHENTIFICATION):
                 System.out.println("Client " + this.getID() + " demande d'authentification");
                 this.demanderAuthentification(objReq);
                 break;
-            case ("demanderListeLobbies"):
+            case (RequetesJSON.ASK_LISTE_LOBBIES):
                 System.out.println("Client " + this.getID() + " demande la liste des lobbies");
                 this.listerLobbies();
                 break;
-            case("demanderPartie"):
+            case(RequetesJSON.ASK_DEMANDE_PARTIE):
                 System.out.println("Client " + this.getID() + " demande une partie");
                 this.demanderMatch(objReq);
+                break;
+            case(RequetesJSON.ASK_LANCEMENT_PARTIE):
+                System.out.println("Client " + this.getID() + " demande le lancement de la partie");
+                this.demanderLancementPartie(objReq);
                 break;
             case ("envoyerAction"):
                 break;
@@ -77,13 +97,18 @@ public class ClientHandler {
     }
 
     public void demanderAuthentification(JSONObject objReq) {
-        String username = objReq.getString("username");
-        String password = objReq.getString("password");
+        String username = objReq.getString(RequetesJSON.Attributs.Authentification.USERNAME);
+        String password = objReq.getString(RequetesJSON.Attributs.Authentification.PASSWORD);
         boolean authResult = this.serverController.demandeAuthentification(username, password);
         System.out.println("Authentication result for client " + idClient + ": " + authResult);
         JSONObject objResp = new JSONObject();
-        objResp.put("action", "reponseAuthentification");
-        objResp.put("reponse", authResult);
+        objResp.put(RequetesJSON.Attributs.ACTION, RequetesJSON.RES_AUTHENTIFICATION);
+        objResp.put(RequetesJSON.Attributs.Authentification.USERNAME, username);
+        objResp.put(RequetesJSON.Attributs.Authentification.ID_CLIENT, idClient);
+        objResp.put(RequetesJSON.Attributs.Authentification.RESULTAT, authResult);
+        if(authResult) {
+            this.setUsername(username);
+        }
         this.issuer.envoyerRequete(objResp.toString());
     }
 
@@ -93,27 +118,40 @@ public class ClientHandler {
     }
 
     public void demanderMatch(JSONObject objReq) {
-        JSONObject objResp = new JSONObject();
-        objResp.put("action", "reponseDemandePartie");
+        JSONObject objResp = null;
         try {
-            int idLobby = objReq.getInt("idLobby");
+            int idLobby = objReq.getInt(RequetesJSON.Attributs.Lobby.ID_LOBBY);
             Lobby lobby = this.serverController.demandeDeMatch(this, idLobby);
-            objResp.put("idMatch", lobby.getID());
             System.out.println("Client: " + idClient + " connected to match: " + lobby.getID());
+            
+            objResp = lobby.getDetailsLobby().toJSON();
+            objResp.put(RequetesJSON.Attributs.ACTION, RequetesJSON.RES_DEMANDE_PARTIE);
 
         }catch (Exception e) {
             System.out.println("No match found for client: " + idClient);
             e.printStackTrace();
-            objResp.put("idMatch", -1);
+            objResp = new JSONObject();
+            objResp.put(RequetesJSON.Attributs.ACTION, RequetesJSON.RES_DEMANDE_PARTIE);
+            objResp.put(RequetesJSON.Attributs.Lobby.ID_LOBBY, -1);
         }
         this.issuer.envoyerRequete(objResp.toString());
 
-        this.serverController.verifierLancementMatch(objResp.getInt("idMatch"));
+        //this.serverController.verifierLancementMatch(objResp.getInt(RequetesJSON.Attributs.Lobby.ID_LOBBY));
+    }
+
+    public void majLobby(JSONObject detailsLobby){
+        detailsLobby.put(RequetesJSON.Attributs.ACTION, RequetesJSON.MAJ_LOBBY);
+        this.issuer.envoyerRequete(detailsLobby.toString());
+    }
+
+    public void demanderLancementPartie(JSONObject objReq) {
+        int idLobby = objReq.getInt(RequetesJSON.Attributs.Lobby.ID_LOBBY);
+        this.serverController.verifierLancementMatch(idLobby, this.idClient);
     }
 
     public void debutPartie() {
         JSONObject objResp = new JSONObject();
-        objResp.put("action", "debutPartie");
+        objResp.put(RequetesJSON.Attributs.ACTION, RequetesJSON.DEBUT_PARTIE);
         //Etat init du jeu à envoyer au client ?
         this.issuer.envoyerRequete(objResp.toString());
     }

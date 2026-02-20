@@ -7,6 +7,8 @@ import java.net.Socket;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import Ressources.RequetesJSON;
+
 public class ClientListener extends Thread {
 
     private Socket so;
@@ -26,7 +28,7 @@ public class ClientListener extends Thread {
                 String line = bReader.readLine();
                 if (line==null) break;
                 JSONObject objReq = new JSONObject(line);
-                String action = objReq.getString("action");
+                String action = objReq.getString(RequetesJSON.Attributs.ACTION);
                 this.clientHandler.gestionReception(action, objReq);
             }
         clientHandler.fermerConnection();

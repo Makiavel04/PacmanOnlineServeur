@@ -2,6 +2,8 @@ package Partie;
 
 import org.json.JSONObject;
 
+import Ressources.RequetesJSON;
+
 public class MatchThread extends Thread {
     private Lobby lobby;
 
@@ -34,8 +36,8 @@ public class MatchThread extends Thread {
 
     public JSONObject getEtat() {
         JSONObject etat = new JSONObject();
-        etat.put("action", "miseAJourPartie");
-        etat.put("tour", this.tour);
+        etat.put(RequetesJSON.Attributs.ACTION, RequetesJSON.MAJ_PARTIE);
+        etat.put(RequetesJSON.Attributs.Partie.TOUR, this.tour);
         return etat;
     }
 }

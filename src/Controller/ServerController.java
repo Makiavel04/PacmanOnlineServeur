@@ -10,6 +10,7 @@ import org.json.JSONObject;
 
 import Client.ClientHandler;
 import Partie.Lobby;
+import Ressources.RequetesJSON;
 
 public class ServerController {
     private int port;
@@ -45,15 +46,15 @@ public class ServerController {
         return true;
     }
 
-    public JSONObject listerLobbies(){
+    public JSONObject listerLobbies(){//Faire la transformation ailleurs ?
         JSONObject infosLobbies = new JSONObject();
-        infosLobbies.put("action", "reponseListeLobbies");
+        infosLobbies.put(RequetesJSON.Attributs.ACTION, RequetesJSON.RES_LISTE_LOBBIES);
 
         JSONArray lobbiesArray = new JSONArray();
         for(Lobby lobby : lobbies) {
-            lobbiesArray.put(lobby.getInfosLobby().toJSON());
+            lobbiesArray.put(lobby.getResumeLobby().toJSON());
         }
-        infosLobbies.put("lobbies", lobbiesArray);
+        infosLobbies.put(RequetesJSON.Attributs.Lobby.LISTE_LOBBIES, lobbiesArray);
         return infosLobbies;
     }
 
@@ -67,8 +68,8 @@ public class ServerController {
                 if (lobbyFound == null) {
                     throw new Exception("Lobby with ID " + idLobby + " not found.");
                 }
+                this.connectionLobby(client, lobbyFound);
             }
-            this.connectionLobby(client, lobbyFound);
             return lobbyFound;
         } catch (Exception e) {
             System.out.println("Error handling lobby request: " + e.getMessage());
@@ -77,14 +78,15 @@ public class ServerController {
 
     }
 
-    public void verifierLancementMatch(int idLobby) {
+    public void verifierLancementMatch(int idLobby, int idClient) {
         Lobby lobby = this.getLobby(idLobby);
-        if (lobby != null && lobby.isFilled()) {
+        if (lobby != null && lobby.isFilled() && lobby.getHost().getID() == idClient) {
             lobby.lancerPartie();
             System.out.println("Lobby: " + idLobby + " started successfully");
         } else {
             if(lobby==null) System.out.println("Lobby: " + idLobby + " cannot be started. Not found.");
             else if(!lobby.isFilled()) System.out.println("Lobby: " + idLobby + " cannot be started. Not filled.");
+            else if(lobby.getHost().getID() != idClient) System.out.println("Lobby: " + idLobby + " cannot be started. Client " + idClient + " is not the host.");
         }
     }
 
