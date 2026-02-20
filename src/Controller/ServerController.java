@@ -33,7 +33,9 @@ public class ServerController {
                 Socket so = this.ecoute.accept();
                 ClientHandler clientHandler = new ClientHandler(so, this);
                 clientHandler.ouvrirConnection();
-                this.clients.add(clientHandler);
+                synchronized (this.clients) {
+                    this.clients.add(clientHandler);
+                }
                 int idClient = clientHandler.getID();
                 System.out.println("New client: "+ idClient +" on the server");
             }
@@ -51,64 +53,61 @@ public class ServerController {
         infosLobbies.put(RequetesJSON.Attributs.ACTION, RequetesJSON.RES_LISTE_LOBBIES);
 
         JSONArray lobbiesArray = new JSONArray();
-        for(Lobby lobby : lobbies) {
-            lobbiesArray.put(lobby.getResumeLobby().toJSON());
+        synchronized (this.lobbies) {
+            for(Lobby lobby : lobbies) {
+                lobbiesArray.put(lobby.getResumeLobby().toJSON());
+            }
         }
         infosLobbies.put(RequetesJSON.Attributs.Lobby.LISTE_LOBBIES, lobbiesArray);
         return infosLobbies;
     }
 
-    public synchronized Lobby demandeDeMatch(ClientHandler client, int idLobby) throws Exception {
+    public Lobby demandeDeMatch(ClientHandler client, int idLobby) throws Exception {
         try{
             Lobby lobbyFound;
-            if(idLobby == -1) {
-                lobbyFound = this.creerLobby(client);
-            }else{
-                lobbyFound = this.getLobby(idLobby);
-                if (lobbyFound == null) {
-                    throw new Exception("Lobby with ID " + idLobby + " not found.");
+            synchronized (this.lobbies) {
+                if(idLobby == -1) {
+                    lobbyFound = this.creerLobby(client);
+                }else{
+                    lobbyFound = this.getLobby(idLobby);
+                    if (lobbyFound == null) {
+                        throw new Exception("Lobby with ID " + idLobby + " not found.");
+                    }
+                    this.connectionLobby(client, lobbyFound);
                 }
-                this.connectionLobby(client, lobbyFound);
             }
             return lobbyFound;
         } catch (Exception e) {
             System.out.println("Error handling lobby request: " + e.getMessage());
             throw e;
         }
-
     }
 
     public void verifierLancementMatch(int idLobby, int idClient) {
-        Lobby lobby = this.getLobby(idLobby);
-        if (lobby != null && lobby.isFilled() && lobby.getHost().getID() == idClient) {
-            lobby.lancerPartie();
-            System.out.println("Lobby: " + idLobby + " started successfully");
-        } else {
-            if(lobby==null) System.out.println("Lobby: " + idLobby + " cannot be started. Not found.");
-            else if(!lobby.isFilled()) System.out.println("Lobby: " + idLobby + " cannot be started. Not filled.");
-            else if(lobby.getHost().getID() != idClient) System.out.println("Lobby: " + idLobby + " cannot be started. Client " + idClient + " is not the host.");
-        }
-    }
-
-    public Lobby trouverLobbyAvecPlace () {
-        for (int i = 0; i < lobbies.size(); i++) {
-            Lobby lobby = lobbies.get(i);
-            if (!lobby.isFilled()) {
-                return lobby;
+        synchronized (this.lobbies) {
+            Lobby lobby = this.getLobby(idLobby);
+            if (lobby != null) {
+                lobby.tenterLancementPartie(idClient);
+                System.out.println("Lobby: " + idLobby + " started successfully");
+            } else {
+                System.out.println("Lobby: " + idLobby + " cannot be started. Not found.");
             }
         }
-        return null;
     }
 
     public Lobby creerLobby (ClientHandler client) {
         Lobby lobby = new Lobby(client, this);
-        lobbies.add(lobby);
+        synchronized (this.lobbies) {
+            this.lobbies.add(lobby);
+        }
         return lobby;
     }
 
-    public synchronized void connectionLobby (ClientHandler client, Lobby lobby) throws Exception {
+    public void connectionLobby (ClientHandler client, Lobby lobby) throws Exception {
         try{
-            lobby.connectClient(client);
+            synchronized (this.lobbies) {
+                lobby.connectClient(client);
+            }
             System.out.println("Client: " + client.getID() +"successfully connected to lobby: "+ lobby.getID());
         } catch (Exception e) {
             System.out.println("Error connecting client to lobby: " + e.getMessage());
@@ -117,31 +116,45 @@ public class ServerController {
     }
 
     public ClientHandler getClient(int idClient) {
-        for (int i = 0; i < clients.size(); i++) {
-            if (clients.get(i).getID() == idClient) {
-                return clients.get(i);
-            }        
+        synchronized (this.clients){    
+            for (int i = 0; i < clients.size(); i++) {
+                if (clients.get(i).getID() == idClient) {
+                    return clients.get(i);
+                }        
+            }
+            return null;
         }
-        return null;
     }
 
     public Lobby getLobby(int idLobby) {
-        for (int i = 0; i < lobbies.size(); i++) {
-            if (lobbies.get(i).getID() == idLobby) {
-                return lobbies.get(i);
-            }        
+        synchronized (this.lobbies){    
+            for (int i = 0; i < lobbies.size(); i++) {
+                if (lobbies.get(i).getID() == idLobby) {
+                    return lobbies.get(i);
+                }        
+            }
+            return null;
         }
-        return null;
     }
 
     public void removeClient(int idClient){
-        for (int i = 0; i < clients.size(); i++) {
-            if (clients.get(i).getID() == idClient) {
-                clients.remove(i);
-                System.out.println("Client " + idClient + " removed successfully");
-                break;//Et s'arrête
-            }
+        synchronized (this.clients) {
+            this.clients.removeIf(client -> client.getID() == idClient);
         }
+        System.out.println("Client " + idClient + " removed successfully");
     }
 
+    public void removeLobby(int idLobby){
+        synchronized (this.lobbies) {
+            this.lobbies.removeIf(lobby -> lobby.getID() == idLobby);
+        }
+        System.out.println("Lobby " + idLobby + " removed successfully");
     }
+
+    public synchronized Vector<Lobby> getLobbies() {
+        return lobbies;
+    }
+    public synchronized Vector<ClientHandler> getClients() {
+        return clients;
+    }
+}

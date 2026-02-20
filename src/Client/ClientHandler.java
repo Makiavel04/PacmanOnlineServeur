@@ -14,6 +14,7 @@ public class ClientHandler {
     public static int idCpt = 0;
     private int idClient;
     private ServerController serverController;
+    private Lobby lobby;
     private ClientListener listener;
     private ClientIssuer issuer;
     private Socket so;
@@ -22,12 +23,14 @@ public class ClientHandler {
     public ClientHandler(Socket so, ServerController sc) {
         this.idClient = ClientHandler.idCpt++;
         this.serverController = sc;
+        this.lobby = null;
         this.so = so;
         this.listener = new ClientListener(so, this);
         this.issuer = new ClientIssuer(so, this);
         System.out.println("New client: " + idClient + " created");
     }
 
+    //--- Getters et setters ---
     public int getID() {
         return this.idClient;
     }
@@ -39,10 +42,15 @@ public class ClientHandler {
         this.username = username;
     }
 
+    public void setLobby(Lobby lobby) {
+        this.lobby = lobby;
+    }
+
     public DetailsClient getDetailsClient() {
         return new DetailsClient(this.idClient, this.username);
     }
 
+    // --- Gestion de la connection ---
     public void ouvrirConnection() throws IOException {
         try {
             this.listener.ouvrirConnection();
@@ -59,18 +67,27 @@ public class ClientHandler {
     }
 
     public void fermerConnection() {
-        try {
-            so.close(); 
-            this.listener.interrupt();
-            this.issuer.interrupt();
-            System.out.println("Connection with client: " + idClient + " closed");
+        this.listener.interrupt();
+        this.issuer.interrupt();
+        this.serverController.removeClient(this.idClient);
+        if(this.lobby != null) {//Évite le crash si le client se déconnecte avant d'avoir rejoint un lobby
+            this.lobby.disconnectClient(this.idClient);
+        }
+        System.out.println("Connection with client: " + idClient + " closed");
 
+        try {
+            if(this.listener != null) this.listener.fermerReader();
+            if(this.issuer != null) this.issuer.fermerWriter();
+            if(so != null && !so.isClosed()) {
+                so.close(); //En dernier car lèvent sistématiquement une IOException
+            }
         } 
         catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    // --- Gestion des requêtes ---
     public void gestionReception(String action, JSONObject objReq) {
         switch (action) {
             case (RequetesJSON.ASK_AUTHENTIFICATION):
@@ -123,6 +140,7 @@ public class ClientHandler {
             int idLobby = objReq.getInt(RequetesJSON.Attributs.Lobby.ID_LOBBY);
             Lobby lobby = this.serverController.demandeDeMatch(this, idLobby);
             System.out.println("Client: " + idClient + " connected to match: " + lobby.getID());
+            this.setLobby(lobby);
             
             objResp = lobby.getDetailsLobby().toJSON();
             objResp.put(RequetesJSON.Attributs.ACTION, RequetesJSON.RES_DEMANDE_PARTIE);
@@ -135,8 +153,6 @@ public class ClientHandler {
             objResp.put(RequetesJSON.Attributs.Lobby.ID_LOBBY, -1);
         }
         this.issuer.envoyerRequete(objResp.toString());
-
-        //this.serverController.verifierLancementMatch(objResp.getInt(RequetesJSON.Attributs.Lobby.ID_LOBBY));
     }
 
     public void majLobby(JSONObject detailsLobby){
@@ -162,7 +178,7 @@ public class ClientHandler {
 
     public void finPartie() {
         JSONObject objResp = new JSONObject();
-        objResp.put("action", "finDePartie");
+        objResp.put(RequetesJSON.Attributs.ACTION, RequetesJSON.FIN_PARTIE);
         //Etat final du jeu à envoyer au client ?
         this.issuer.envoyerRequete(objResp.toString());
     }

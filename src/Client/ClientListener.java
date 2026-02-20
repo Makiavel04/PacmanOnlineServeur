@@ -45,4 +45,13 @@ public class ClientListener extends Thread {
             throw new IOException(e.getMessage());
         }
     }
+
+    public void fermerReader() throws IOException {
+        try {
+            bReader.close();
+        }
+        catch (IOException e) {
+            throw new IOException(e.getMessage());
+        }
+    }
 }

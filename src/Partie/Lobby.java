@@ -38,8 +38,11 @@ public class Lobby {
     }
 
     public boolean isFilled() {
-        return this.nbJoueurConnecte >= this.nbJoueurMax;
-    }
+        
+        synchronized (this.clients) {
+            return this.nbJoueurConnecte >= this.nbJoueurMax;
+        }
+}
 
     public MatchThread getMatchThread() {
         return this.matchThread;
@@ -47,17 +50,30 @@ public class Lobby {
 
     //--- Connection client ---
     public synchronized void connectClient(ClientHandler client) throws Exception {
-        if(!this.isFilled() && this.matchThread == null) {
-            clients.add(client);
-            this.nbJoueurConnecte++;
-            this.majLobby(client.getID());
-        }else {
-            throw new Exception("Match is already full");
+        synchronized (this.clients) {
+            if(!this.isFilled() && this.matchThread == null) {
+                this.clients.add(client);
+                this.nbJoueurConnecte = this.clients.size();
+                this.majLobby(client.getID());
+            }else {
+                throw new Exception("Match is already full");
+            }
         }
     }
-    public synchronized void disconnectClient(ClientHandler client) {
-        clients.remove(client);
-        this.nbJoueurConnecte--;
+
+    public void disconnectClient(int clientId) {
+        synchronized (this.clients) {
+            this.clients.removeIf(client -> client.getID() == clientId);
+            this.nbJoueurConnecte = this.clients.size();
+            if(this.clients.size() == 0) {
+                this.serverController.removeLobby(this.idLobby);
+            } else {
+                if(clientId == this.idHost) {
+                    this.migrerHost();
+                }
+                this.majLobby(clientId);
+            }
+        }
     }
 
     //--- Infos du lobby ---
@@ -71,35 +87,40 @@ public class Lobby {
 
     public ArrayList<DetailsClient> getAllLobbyClients() {
         ArrayList<DetailsClient> clientsDetails = new ArrayList<>();
-        for(ClientHandler client : clients) {
-            clientsDetails.add(client.getDetailsClient());
+        synchronized (this.clients) {
+            for(ClientHandler client : clients) {
+                clientsDetails.add(client.getDetailsClient());
+            }
         }
         return clientsDetails;
     }
 
     public ClientHandler getHost() {
-        for(ClientHandler client : clients) {
-            if(client.getID() == this.idHost) {
-                return client;
+        synchronized (this.clients) {
+            for(ClientHandler client : clients) {
+                if(client.getID() == this.idHost) {
+                    return client;
+                }
             }
         }
         return null;
     }
 
     public void migrerHost(){
-        if(this.clients.size() > 0) {
-            if(this.idHost == this.clients.get(0).getID()) {
-                this.idHost = this.clients.get(1).getID();
-            } else {
+        synchronized (this.clients) {
+            if(!this.clients.isEmpty()) { //Sinon il devrait être supprimé avant car plus personne dans le lobby
                 this.idHost = this.clients.get(0).getID();
+                System.out.println("Host migrated to client: " + this.idHost + " in lobby: " + this.idLobby);
             }
         }
     }
 
     public void majLobby(int newClientId) {
-        for(ClientHandler client : clients) {
-            if(client.getID() != newClientId) {//On ne veut pas maj le client qui vient de se connecter
-                client.majLobby(this.getDetailsLobby().toJSON());
+        synchronized (this.clients) {
+            for(ClientHandler client : clients) {
+                if(client.getID() != newClientId) {//On ne veut pas maj le client qui vient de se connecter
+                    client.majLobby(this.getDetailsLobby().toJSON());
+                }
             }
         }
     }
@@ -107,6 +128,18 @@ public class Lobby {
 
 
     //--- Gestion du match ---
+    public void tenterLancementPartie(int idClient){
+        synchronized (this.clients) {
+            if (this.isFilled() && this.getHost().getID() == idClient) { // Synchronized car getHost et isFilled (bien qu'ayant leur propre synchronisation) sont utilisés ensemble, et on veut le même état pour les deux.
+                    this.lancerPartie();
+                    System.out.println("Lobby: " + this.idLobby + " started successfully");
+            } else {
+                if(!this.isFilled()) System.out.println("Lobby: " + this.idLobby + " cannot be started. Not filled.");
+                else if(this.getHost().getID() != idClient) System.out.println("Lobby: " + this.idLobby + " cannot be started. Client " + idClient + " is not the host.");
+            }
+        }
+    }
+
     public void lancerPartie(){
         this.notifierDebutPartie();
         this.matchThread = new MatchThread(this);
@@ -114,19 +147,31 @@ public class Lobby {
     }
 
     public void notifierDebutPartie() {
-        for(int i = 0; i < clients.size(); i++) {
-            clients.get(i).debutPartie();
+        synchronized (this.clients) {
+             for(ClientHandler client : clients) {
+                client.debutPartie();
+            }
         }
     }
 
     public void notfierTour(JSONObject etat) {
-        for(int i = 0; i < clients.size(); i++) {
-            clients.get(i).majTour(etat.toString());
+        synchronized (this.clients) {
+             for(ClientHandler client : clients) {
+                client.majTour(etat.toString());
+            }
         }
     }
     public void notifierFinPartie() {
-        for(int i = 0; i < clients.size(); i++) {
-            clients.get(i).finPartie();
+        synchronized (this.clients) {
+            for(ClientHandler client : clients) {
+                client.finPartie();
+            }
+            //Faire quitter tous les clients du lobby et supprimer le lobby
+            for(ClientHandler client : clients) {
+                client.setLobby(null);
+            }
+            this.clients.clear();
+            this.serverController.removeLobby(this.idLobby);
         }
-        this.matchThread = null;
-    }}
+    }
+}

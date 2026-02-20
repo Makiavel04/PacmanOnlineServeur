@@ -43,4 +43,8 @@ public class ClientIssuer extends Thread{
     public void envoyerRequete(String message) {
         fileMessages.add(message); 
     }
+
+    public void fermerWriter() {
+        pWriter.close();
+    }
 }
