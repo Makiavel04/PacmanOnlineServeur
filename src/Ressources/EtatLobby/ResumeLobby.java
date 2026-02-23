@@ -1,8 +1,11 @@
-package Ressources;
+package Ressources.EtatLobby;
 
 import org.json.JSONObject;
 
-public class ResumeLobby {
+import Ressources.RequetesJSON;
+import Ressources.TransformableJSON;
+
+public class ResumeLobby implements TransformableJSON {
     //Attributs
     private int idLobby;
     private int nbJoueur;
@@ -30,6 +33,7 @@ public class ResumeLobby {
         }
     }
 
+    @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put(RequetesJSON.Attributs.Lobby.ID_LOBBY, this.idLobby);

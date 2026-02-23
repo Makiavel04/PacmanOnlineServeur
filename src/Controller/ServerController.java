@@ -22,13 +22,13 @@ public class ServerController {
         this.port = p;
         this.clients = new Vector<ClientHandler>();
         this.lobbies = new Vector<Lobby>();
-        System.out.println("Server set up");
+        System.out.println("Serveur mis en place");
     } 
 
     public void launch() {
         try {
             this.ecoute = new ServerSocket(port);
-            System.out.println("Server launched on port: " + this.port);
+            System.out.println("Serveur lancé sur le port: " + this.port);
             while (true) {
                 Socket so = this.ecoute.accept();
                 ClientHandler clientHandler = new ClientHandler(so, this);
@@ -37,10 +37,10 @@ public class ServerController {
                     this.clients.add(clientHandler);
                 }
                 int idClient = clientHandler.getID();
-                System.out.println("New client: "+ idClient +" on the server");
+                System.out.println("Nouveau client#"+ idClient +" sur le serveur");
             }
         } catch (IOException e) {
-            System.out.println("Problem\n"+ e);
+            System.out.println("Problème serveur :\n"+ e);
         }
     }
     
@@ -71,14 +71,14 @@ public class ServerController {
                 }else{
                     lobbyFound = this.getLobby(idLobby);
                     if (lobbyFound == null) {
-                        throw new Exception("Lobby with ID " + idLobby + " not found.");
+                        throw new Exception("Lobby#" + idLobby + " non trouvé.");
                     }
                     this.connectionLobby(client, lobbyFound);
                 }
             }
             return lobbyFound;
         } catch (Exception e) {
-            System.out.println("Error handling lobby request: " + e.getMessage());
+            System.out.println("Erreur dans la gestion de demander de match : " + e.getMessage());
             throw e;
         }
     }
@@ -88,9 +88,8 @@ public class ServerController {
             Lobby lobby = this.getLobby(idLobby);
             if (lobby != null) {
                 lobby.tenterLancementPartie(idClient);
-                System.out.println("Lobby: " + idLobby + " started successfully");
             } else {
-                System.out.println("Lobby: " + idLobby + " cannot be started. Not found.");
+                System.out.println("Lobby#" + idLobby + " ne peut pas démarrer : non trouvé.");
             }
         }
     }
@@ -108,9 +107,9 @@ public class ServerController {
             synchronized (this.lobbies) {
                 lobby.connectClient(client);
             }
-            System.out.println("Client: " + client.getID() +"successfully connected to lobby: "+ lobby.getID());
+            System.out.println("Client#" + client.getID() +" connecté au lobby#" + lobby.getID());
         } catch (Exception e) {
-            System.out.println("Error connecting client to lobby: " + e.getMessage());
+            System.out.println("Erreur lors de la connexion du client#" + client.getID() + " au lobby#" + lobby.getID() + " : " + e.getMessage());
             throw e;
         }
     }
@@ -141,14 +140,14 @@ public class ServerController {
         synchronized (this.clients) {
             this.clients.removeIf(client -> client.getID() == idClient);
         }
-        System.out.println("Client " + idClient + " removed successfully");
+        System.out.println("Client#" + idClient + " supprimé avec succès");
     }
 
     public void removeLobby(int idLobby){
         synchronized (this.lobbies) {
             this.lobbies.removeIf(lobby -> lobby.getID() == idLobby);
         }
-        System.out.println("Lobby " + idLobby + " removed successfully");
+        System.out.println("Lobby#" + idLobby + " supprimé avec succès");
     }
 
     public synchronized Vector<Lobby> getLobbies() {
