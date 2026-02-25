@@ -24,6 +24,12 @@ import Ressources.EtatGame.EtatPacmanGame;
  * Jeu de pacman
  */
 public class PacmanGame extends Game{
+    /** Bonnus fantome si fin sous cette barre */
+    public static final int TOUR_BONUS = 200;
+    
+    /** Bonus par vies restantes aux Pacmans */
+    public static final int BONUS_VIE = 75;
+
     /** Labyrinthe du jeu */
     private Maze labyrinthe;
     private String nomLabyrinthe;
@@ -38,6 +44,8 @@ public class PacmanGame extends Game{
     private int nbViesPacman; //Nombre de vies total des pacmans (coopération)
 
     private int scoreGhost; //Coopération => score des ghosts (nombre de pacmans mangés)
+
+    private TypeAgent vainqueur; //Indique le vainqueur de la partie (pacman, fantome ou nul)
 
     /** Fournisseur de constructeurs d'agents */
     private FactoryProviderAgent factoriesAgents;
@@ -68,6 +76,13 @@ public class PacmanGame extends Game{
     }
     public String getNomLabyrinthe(){
         return this.nomLabyrinthe;
+    }
+
+    public TypeAgent getVainqueur() {
+        return this.vainqueur;
+    }
+    public void setVainqueur(TypeAgent vainqueur) {
+        this.vainqueur = vainqueur;
     }
 
     /**
@@ -150,6 +165,7 @@ public class PacmanGame extends Game{
     public void initializeGame() {
         this.listeAgents = new ArrayList<>();
         this.actionsAgents = new HashMap<>();
+        this.setVainqueur(null);
         this.resetScorePacman();
         this.resetScoreGhost();
         this.resetViesPacman();
@@ -332,12 +348,16 @@ public class PacmanGame extends Game{
         } else if(a1.isVulnerable(this) && !a1.isMort()){
             if(this.isCapsuleActive()){//Ce cas ne se produit que si on a la capsule active ce qui implique que ceux qui mangent sont des pacmans
                 eatGhost();
+            }else{
+                eatPacman();
             }
             a1.setMort(true);//a1 meurt
             return false; //Pas de collision : a2 mange a1
         } else if(a2.isVulnerable(this) && !a2.isMort()){
             if(this.isCapsuleActive()){//Ce cas ne se produit que si on a la capsule active ce qui implique que ceux qui mangent sont des pacmans
                 eatGhost();
+            }else{
+                eatPacman();
             }
             a2.setMort(true);//a2 meurt
             return false; //Pas de collision : a1 mange a2
@@ -429,6 +449,14 @@ public class PacmanGame extends Game{
     }
 
     /**
+     * Faire manger un pacman à un fantôme et associer le score
+     */
+    public void eatPacman(){
+        this.addScoreGhost(75);
+        System.out.println("Fantôme a mangé un pacman : +75pts");
+    }
+
+    /**
      * Actualiser les positions des agents pour le labyrinthe
      */
     public void actualiserLabyrinthe(){
@@ -477,9 +505,15 @@ public class PacmanGame extends Game{
         if(this.gagner()){
             System.out.println("Tous les Pacmans ont mangé toute la nourriture.");
             System.out.println("Partie terminée : Victoire !");
+            //Pacman gagnent des points supplémentaire s'ils finissent avec des vies restantes
+            this.addScorePacman(PacmanGame.BONUS_VIE*this.getNbViesPacman());
+            this.setVainqueur(TypeAgent.PACMAN);
         } else {
             System.out.println("Tous les Pacmans sont morts.");
             System.out.println("Partie terminée : Défaite !");
+            //Ghost gagnent des points supplémentaire si finissent en moins de 200 tours
+            this.addScoreGhost(PacmanGame.TOUR_BONUS-this.getTurn());
+            this.setVainqueur(TypeAgent.FANTOME);
         }
         this.lobby.notifierFinPartie();
     }

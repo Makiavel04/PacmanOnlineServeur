@@ -68,4 +68,7 @@ public class Bot implements Joueur {
         return true;
     }
         
+    public void finPartie() {
+        this.agent = null;
+    }
 }

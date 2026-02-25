@@ -19,6 +19,7 @@ import Ressources.EtatGame.EtatPacmanGame;
 import Ressources.EtatLobby.DetailsJoueur;
 import Ressources.EtatLobby.DetailsLobby;
 import Ressources.EtatLobby.ResumeLobby;
+import Ressources.EtatLobby.ScoreFinPartie;
 
 public class Lobby {
     public static final String DOSSIER_MAP = "./layout/";
@@ -310,15 +311,15 @@ public class Lobby {
     }
     public void notifierFinPartie() {
         synchronized (this.clients) {
+            ScoreFinPartie score = new ScoreFinPartie(this.game.getVainqueur(), this.game.getScoreGhost(), this.game.getScorePacman());
             for(ClientHandler client : clients) {
-                client.finPartie();
+                client.finPartie(score);
             }
-            //Faire quitter tous les clients du lobby et supprimer le lobby
-            for(ClientHandler client : clients) {
-                client.setLobby(null);
+        }
+        synchronized(this.bots){
+            for(Bot bot : bots){
+                bot.finPartie();//Réinit le bot
             }
-            this.clients.clear();
-            this.serverController.removeLobby(this.idLobby);
         }
     }
 

@@ -12,6 +12,7 @@ public final class RequetesJSON {
     public static final String ASK_LANCEMENT_PARTIE = "demanderLancementPartie";
 
     public static final String MAJ_LOBBY = "majLobby";
+    public static final String QUITTER_LOBBY = "quitterLobby";
         
     public static final String DEBUT_PARTIE = "debutPartie";
     public static final String MAJ_PARTIE = "miseAJourPartie";
@@ -98,6 +99,11 @@ public final class RequetesJSON {
             public static final String GHOSTS_START = "ghosts_start";
         }
 
+        public final class ScoreFinPartie {
+            public static final String VAINQUEUR = "vainqueur";
+            public static final String SCORE_FANTOME = "scoreFantome";
+            public static final String SCORE_PACMAN = "scorePacman";
+        }
     }
 }
 

@@ -15,6 +15,7 @@ import Partie.Pacman.Agents.Strategies.TypeStrategie;
 import Ressources.RequetesJSON;
 import Ressources.EtatGame.EtatPacmanGame;
 import Ressources.EtatLobby.DetailsJoueur;
+import Ressources.EtatLobby.ScoreFinPartie;
 
 public class ClientHandler implements Joueur{
 
@@ -116,6 +117,10 @@ public class ClientHandler implements Joueur{
                 System.out.println("Client#" + this.getID() + " demande une partie");
                 this.demanderMatch(objReq);
                 break;
+            case(RequetesJSON.QUITTER_LOBBY):
+                System.out.println("Client#" + this.getID() + " demande à quitter le lobby");
+                this.quitterLobby(objReq);
+                break;
             case(RequetesJSON.ASK_LANCEMENT_PARTIE):
                 System.out.println("Client#" + this.getID() + " demande le lancement de la partie");
                 this.demanderLancementPartie(objReq);
@@ -199,6 +204,19 @@ public class ClientHandler implements Joueur{
         this.issuer.envoyerRequete(objResp.toString());
     }
 
+    public void quitterLobby(JSONObject objReq) {
+        int idLobby = objReq.getInt(RequetesJSON.Attributs.Lobby.ID_LOBBY);
+        if(this.lobby != null && idLobby == this.lobby.getID()) {
+            this.lobby.disconnectClient(this.idClient);
+            this.setLobby(null);
+            this.agent = null; //Efface l'agent pour éviter les soucis si on relance une partie
+            this.typeAgent = null; //Efface le type d'agent pour éviter les soucis si on relance une partie
+            System.out.println("Client#" + idClient + " a quitté le lobby#" + idLobby);
+        }else{
+            System.out.println("Client#" + idClient + " a tenté de quitter un lobby dont il ne fait pas partie (Lobby#" + idLobby + ")");
+        }
+    }
+
     public void majLobby(JSONObject detailsLobby){
         detailsLobby.put(RequetesJSON.Attributs.ACTION, RequetesJSON.MAJ_LOBBY);
         this.issuer.envoyerRequete(detailsLobby.toString());
@@ -220,11 +238,12 @@ public class ClientHandler implements Joueur{
         this.issuer.envoyerRequete(etatTour);
     }
 
-    public void finPartie() {
-        JSONObject objResp = new JSONObject();
+    public void finPartie(ScoreFinPartie score) {
+        JSONObject objResp = score.toJSON();
         objResp.put(RequetesJSON.Attributs.ACTION, RequetesJSON.FIN_PARTIE);
         //Etat final du jeu à envoyer au client ?
         this.issuer.envoyerRequete(objResp.toString());
+        this.agent = null; //Efface l'agent pour éviter les soucis si on relance
     }
 
     public void demanderAjoutBot(JSONObject objReq){
