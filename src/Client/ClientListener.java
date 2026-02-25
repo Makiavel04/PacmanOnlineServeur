@@ -20,6 +20,9 @@ public class ClientListener extends Thread {
         this.clientHandler = c;
     }
 
+    /**
+     * Tourne en permanence pour recevoir les messages du client et les traiter en fonction de leur action
+     */
     @Override
     public void run() {
         System.out.println("ClientListener thread started");
@@ -37,6 +40,10 @@ public class ClientListener extends Thread {
         }
     }
 
+    /**
+     * Ouvre la connexion en initialisant le BufferedReader pour recevoir les messages du client
+     * @throws IOException si une erreur d'entrée/sortie se produit lors de l'ouverture de la connexion
+     */
     public void ouvrirConnection() throws IOException {
         try {
             bReader = new BufferedReader(new InputStreamReader(so.getInputStream()));
@@ -46,6 +53,10 @@ public class ClientListener extends Thread {
         }
     }
 
+    /**
+     * Ferme le BufferedReader pour libérer les ressources associées à la connexion avec le client
+     * @throws IOException si une erreur d'entrée/sortie se produit lors de la fermeture du BufferedReader
+     */
     public void fermerReader() throws IOException {
         try {
             bReader.close();

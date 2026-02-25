@@ -9,6 +9,7 @@ public class ClientIssuer extends Thread{
     private Socket so;
     private ClientHandler clientHandler;
     private PrintWriter pWriter;
+    /**File de messages en attent d'être envoyés au client */
     private LinkedBlockingQueue<String> fileMessages;
 
     public ClientIssuer(Socket so, ClientHandler c) {
@@ -17,6 +18,9 @@ public class ClientIssuer extends Thread{
         this.fileMessages = new LinkedBlockingQueue<>();
     }
 
+    /**
+     * Tourne en permanence pour envoyer les messages de la file d'attente au client
+     */
     @Override
     public void run() {//Tourne en permanence pour envoyer les messages de la file d'attente au client
         try{
@@ -31,6 +35,10 @@ public class ClientIssuer extends Thread{
         }
     }
 
+    /** 
+     * Ouvre la connexion en initialisant le PrintWriter pour envoyer les messages au client
+      * @throws IOException si une erreur d'entrée/sortie se produit lors de l'ouverture de la connexion
+     */
     public void ouvrirConnection() throws IOException {
         try {
             pWriter = new PrintWriter(so.getOutputStream(), true);
@@ -40,10 +48,17 @@ public class ClientIssuer extends Thread{
         }
     }
 
+    /**
+     * Ajoute un message à la file d'attente pour qu'il soit envoyé au client
+     * @param message message à envoyer au client
+     */
     public void envoyerRequete(String message) {
         fileMessages.add(message); 
     }
 
+    /**
+     * Ferme le PrintWriter pour libérer les ressources associées à la connexion avec le client
+     */
     public void fermerWriter() {
         pWriter.close();
     }

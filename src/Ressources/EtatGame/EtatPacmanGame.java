@@ -5,6 +5,9 @@ import org.json.JSONObject;
 import Partie.Pacman.Game.Maze;
 import Ressources.RequetesJSON;
 
+/**
+ * Classe représentant l'état d'une partie de Pacman à un moment donné.
+ */
 public class EtatPacmanGame extends EtatGame {
     private int scorePacmans;
     private int scoreFantomes;
@@ -28,6 +31,11 @@ public class EtatPacmanGame extends EtatGame {
     public int getViesPacmans() {return viesPacmans;}
     public boolean isCapsuleActive() {return capsuleActive;}
 
+    /**
+     * Crée une instance d'EtatPacmanGame à partir d'un objet JSON.
+     * @param json L'objet JSON contenant les données de l'état du jeu.
+     * @return Une instance d'EtatPacmanGame ou null en cas d'erreur de parsing.
+     */
     public static EtatPacmanGame fromJSON(JSONObject json) {
         try {
             int tour = json.getInt(RequetesJSON.Attributs.Partie.TOUR);

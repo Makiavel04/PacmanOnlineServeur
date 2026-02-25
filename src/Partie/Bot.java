@@ -5,11 +5,17 @@ import Partie.Pacman.Agents.TypeAgent;
 import Partie.Pacman.Agents.Strategies.Strategie;
 import Partie.Pacman.Agents.Strategies.TypeStrategie;
 import Ressources.EtatLobby.DetailsJoueur;
-
+/**
+ * Classe représentant un bot dans une partie de Pacman.
+ */
 public class Bot implements Joueur {
+    /**Agent du bot */
     Agent agent;
+    /**Type de la stratégie du bot */
     TypeStrategie typeStrategie;
+    /**Type de l'agent du bot */
     TypeAgent typeAgent;
+    /**Numéro du bot */
     int numBot;
 
     public Bot(int num, TypeAgent typeAgent, TypeStrategie typeStrategie) {
@@ -67,7 +73,10 @@ public class Bot implements Joueur {
     public boolean isBot() {
         return true;
     }
-        
+     
+    /**
+     * Gestion de la fin de partie pour le bot.
+     */
     public void finPartie() {
         this.agent = null;
     }

@@ -22,7 +22,9 @@ import Ressources.EtatLobby.ResumeLobby;
 import Ressources.EtatLobby.ScoreFinPartie;
 
 public class Lobby {
+    /** Chemin vers les layouts de maps */
     public static final String DOSSIER_MAP = "./layout/";
+    
     public static int idCpt = 0;
 
     private int idLobby;
@@ -61,11 +63,10 @@ public class Lobby {
     }
 
     public boolean isFilled() {
-        
         synchronized (this.clients) {
             return this.getNbJoueur() >= this.nbJoueurMax;
         }
-}
+    }
 
     public PacmanGame getGame() {
         return this.game;
@@ -132,6 +133,11 @@ public class Lobby {
     }
 
     //--- Connection client ---
+    /**
+     * Connecte un client au lobby
+     * @param client client à connecter
+     * @throws Exception si le lobby est déjà plein ou si la partie a déjà commencé
+     */
     public synchronized void connectClient(ClientHandler client) throws Exception {
         synchronized (this.clients) {
             if(!this.isFilled() && !this.game.isRunning()) {
@@ -144,6 +150,10 @@ public class Lobby {
         }
     }
 
+    /**
+     * Déconnecte un client du lobby. Si le client est l'hôte, un nouveau hôte est désigné. Si le lobby devient vide, il est supprimé.
+     * @param clientId client à déconnecter
+     */
     public void disconnectClient(int clientId) {
         synchronized (this.clients) {
             this.clients.removeIf(client -> client.getID() == clientId);
@@ -159,16 +169,28 @@ public class Lobby {
     }
 
     //--- Infos du lobby ---
+    /**
+     * Retourne un résumé du lobby (sans les détails des joueurs)
+     * @return résumé du lobby
+     */
     public ResumeLobby getResumeLobby(){
         return new ResumeLobby(this.idLobby, this.getNbJoueur(), this.nbJoueurMax);
     }
 
+    /**
+     * Retourne les détails du lobby (avec les détails des joueurs)
+     * @return détails du lobby
+     */
     public DetailsLobby getDetailsLobby(){
         String nomMap = this.game.getNomLabyrinthe().substring(this.game.getNomLabyrinthe().lastIndexOf("/") + 1); //Extraint nom de la map du chemin complet
         //lastIndexOf renvoie -1 si rien trouvé donc -1+1 = 0 donc chaine complète
         return new DetailsLobby(this.idLobby, this.getNbJoueur(), this.nbJoueurMax, this.nbPacmanMax, this.getNbPacman(), this.nbFantomeMax, this.getNbFantome(), this.idHost, this.getAllLobbyClients(), nomMap);
     }
 
+    /**
+     * Retourne les détails de tous les clients du lobby (humains et bots)
+     * @return liste des détails de tous les clients du lobby
+     */
     public ArrayList<DetailsJoueur> getAllLobbyClients() {
         ArrayList<DetailsJoueur> clientsDetails = new ArrayList<>();
         synchronized (this.clients) {
@@ -195,6 +217,9 @@ public class Lobby {
         return null;
     }
 
+    /**
+     * Change l'hôte du lobby
+     */
     public void migrerHost(){
         synchronized (this.clients) {
             if(!this.clients.isEmpty()) { //Sinon il devrait être supprimé avant car plus personne dans le lobby
@@ -204,6 +229,10 @@ public class Lobby {
         }
     }
 
+    /**
+     * Met à jour le lobby pour tous les clients (sauf celui qui vient de faire une action, identifié par newClientId)
+     * @param newClientId Id du client à omettre
+     */
     public void majLobby(int newClientId) {
         synchronized (this.clients) {
             for(ClientHandler client : clients) {
@@ -214,6 +243,10 @@ public class Lobby {
         }
     }
 
+    /**
+     * Liste le nom de toutes les maps disponibles dans le dossier de maps
+     * @return liste des noms de maps disponibles
+     */
     public List<String> getListeMaps() {
         List<String> nomsLayouts = new ArrayList<>();
         
@@ -239,6 +272,11 @@ public class Lobby {
         return nomsLayouts;
     }
 
+    /**
+     * Change la map du lobby et notifie les clients
+     * @param clientHandler client qui demande le changement de map (doit être l'hôte)
+     * @param nomMap nom de la map à charger (doit être dans le dossier de maps et compatible avec le nombre de joueurs actuel)
+     */
     public void changerMap(ClientHandler clientHandler, String nomMap) {
         synchronized(this.clients){
             synchronized(this.bots){
@@ -272,7 +310,10 @@ public class Lobby {
     }
 
     //--- Gestion du match ---
-
+    /**
+     * Tenter de lancer la partie. Refuse si lobby pas plein ou pas demandé par l'hôte.
+     * @param idClient ID du client qui demande le lancement de la partie
+     */
     public void tenterLancementPartie(int idClient){
         synchronized (this.clients) {
             if (this.isFilled() && this.getHost().getID() == idClient) { // Synchronized car getHost et isFilled (bien qu'ayant leur propre synchronisation) sont utilisés ensemble, et on veut le même état pour les deux.
@@ -285,12 +326,18 @@ public class Lobby {
         }
     }
 
+    /**
+     * Lance la partie en initialisant le jeu, en notifiant les clients du début de partie, puis en lançant le jeu.
+     */
     public void lancerPartie(){
         this.game.init();
         this.notifierDebutPartie();
         this.game.launch();
     }
 
+    /**
+     * Notifie les clients du début de la partie et envoie l'état initial du jeu
+     */
     public void notifierDebutPartie() {
         synchronized (this.clients) {
             EtatPacmanGame etatInit = this.game.getEtat();
@@ -300,6 +347,10 @@ public class Lobby {
         }
     }
 
+    /**
+     * Notifie les clients de la mise à jour de l'état du jeu à chaque tour
+     * @param etat état actuel du jeu
+     */
     public void notifierTour(EtatGame etat) {
         JSONObject jsonEtat = etat.toJSON();
         jsonEtat.put(RequetesJSON.Attributs.ACTION, RequetesJSON.MAJ_PARTIE);
@@ -309,6 +360,10 @@ public class Lobby {
             }
         }
     }
+
+    /**
+     * Notifie les clients de la fin de la partie et envoie le score final, puis réinitialise les bots
+     */
     public void notifierFinPartie() {
         synchronized (this.clients) {
             ScoreFinPartie score = new ScoreFinPartie(this.game.getVainqueur(), this.game.getScoreGhost(), this.game.getScorePacman());
@@ -323,6 +378,10 @@ public class Lobby {
         }
     }
 
+    /**
+     * Attribue un rôle par défaut au client qui vient de se connecter
+     * @param client client à qui attribuer un rôle
+     */
     public void roleParDefaut(ClientHandler client) {
         if(this.getNbPacman() < this.nbPacmanMax) {
             client.setTypeAgent(TypeAgent.PACMAN);
@@ -331,6 +390,10 @@ public class Lobby {
         }
     }
 
+    /**
+     * Change le camp du client (de Pacman à Fantome ou inversement) si possible, puis notifie les clients du changement
+     * @param client client qui demande le changement de camp
+     */
     public void changerCamp(ClientHandler client) {
         if(client.getTypeAgent() == TypeAgent.PACMAN && this.getNbFantome() < this.nbFantomeMax) {
             client.setTypeAgent(TypeAgent.FANTOME);
@@ -343,6 +406,11 @@ public class Lobby {
     }
 
     //--- Gestion des bots ---
+    /**
+     * Ajoute un bot du type spécifié si possible, puis notifie les clients du changement
+     * @param type type de bot à ajouter (Pacman ou Fantome)
+     * @param idClient id du client qui demande l'ajout du bot (doit être l'hôte)
+     */
     public void ajouterBot(TypeAgent type, int idClient) {
         if(idClient == this.idHost) {
             synchronized (this.bots) {
@@ -356,6 +424,11 @@ public class Lobby {
         }
     }
 
+    /**
+     * Retire un bot du type spécifié si possible, puis notifie les clients du changement
+     * @param type type de bot à retirer (Pacman ou Fantome)
+     * @param idClient id du client qui demande le retrait du bot (doit être l'hôte)
+     */
     public void retirerBot(TypeAgent type, int idClient) {
         if(idClient == this.idHost) {
             synchronized (this.bots) {
@@ -372,6 +445,11 @@ public class Lobby {
         } 
     } 
 
+    /**
+     * Retourne le bot correspondant à l'id spécifié, ou null si aucun bot ne correspond
+     * @param idBot id du bot à trouver
+     * @return le bot correspondant à l'id spécifié, ou null si aucun bot ne correspond
+     */
     public Bot getBot(int idBot) {
         synchronized (this.bots) {
             for(Bot bot : this.bots) {
@@ -383,6 +461,12 @@ public class Lobby {
         return null;
     }
 
+    /**
+     * Change la stratégie du bot spécifié si possible, puis notifie les clients du changement
+     * @param idClient id du client qui demande le changement de stratégie (doit être l'hôte)
+     * @param idBot id du bot dont la stratégie doit être changée
+     * @param typeStrategie nouvelle stratégie à attribuer au bot
+     */
     public void setStrategieBot(int idClient, int idBot, TypeStrategie typeStrategie) {
         if(idClient == this.idHost) {
             synchronized (this.bots) {

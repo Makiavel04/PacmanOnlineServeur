@@ -5,6 +5,9 @@ import org.json.JSONObject;
 import Ressources.RequetesJSON;
 import Ressources.TransformableJSON;
 
+/**
+ * Classe abstraite représentant l'état d'un jeu à un moment donné.
+ */
 public abstract class EtatGame implements TransformableJSON{
     private int tour;
 

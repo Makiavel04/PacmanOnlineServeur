@@ -1,5 +1,7 @@
 package Ressources;
-
+/**
+ * Classe contenant les différentes requêtes utilisées pour la communication entre le client et le serveur
+ */
 public final class RequetesJSON {
     public static final String ASK_AUTHENTIFICATION = "demanderAuthentification";
     public static final String RES_AUTHENTIFICATION = "reponseAuthentification";
@@ -29,9 +31,11 @@ public final class RequetesJSON {
 
     public static final String SEND_DEPLACEMENT = "envoyerDeplacement";
 
+    /** Classe contenant les attributs utilisés dans les requêtes JSON */
     public final class Attributs {
         public static final String ACTION = "action";
 
+        /** Attributs pour requêtes d'authentification */
         public static final class Authentification {
             public static final String USERNAME = "username";
             public static final String PASSWORD = "password";
@@ -39,6 +43,7 @@ public final class RequetesJSON {
             public static final String RESULTAT = "resultat";
         }
 
+        /** Attributs pour requêtes liées au lobby */
         public final class Lobby {
             public final static String LISTE_LOBBIES = "liste_lobbies";
 
@@ -61,6 +66,7 @@ public final class RequetesJSON {
             public static final String AUTORISE_CHANGEMENT = "autoriseChangement";
         }
 
+        /** Attributs pour requêtes liées aux joueurs */
         public final class Joueur {
             public static final String ID_CLIENT = "idClient";
             public static final String USERNAME = "username";
@@ -69,6 +75,7 @@ public final class RequetesJSON {
             public static final String STRATEGIE = "strategie";
         }
 
+        /** Attributs pour requêtes liées à la partie */
         public final class Partie {
             public static final String TOUR = "tour";
 
@@ -83,12 +90,14 @@ public final class RequetesJSON {
             public static final String SENS_MOUVEMENT = "sensMouvement";
         }
 
+        /** Attributs pour les positions des agents */
         public final class PositionAgent {
             public static final String X = "x";
             public static final String Y = "y";
             public static final String DIR = "dir";
         }
 
+        /** Attributs pour les plateaux */
         public final class Plateau {
             public static final String SIZE_X = "size_x";
             public static final String SIZE_Y = "size_y";

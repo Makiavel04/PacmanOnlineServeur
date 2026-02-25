@@ -4,7 +4,7 @@ import org.json.JSONObject;
 
 import Ressources.RequetesJSON;
 import Ressources.TransformableJSON;
-
+/** Classe représentant un résumé d'un lobby */
 public class ResumeLobby implements TransformableJSON {
     //Attributs
     private int idLobby;
@@ -21,6 +21,11 @@ public class ResumeLobby implements TransformableJSON {
     public int getNbJoueur() {return nbJoueur;}
     public int getNbMaxJoueur() {return nbMaxJoueur;}
 
+    /**
+     * Crée une instance de ResumeLobby à partir d'un objet JSON.
+     * @param json L'objet JSON contenant les données du résumé du lobby.
+     * @return Une instance de ResumeLobby ou null en cas d'erreur de parsing.
+     */
     public static ResumeLobby fromJSON(JSONObject json){
         try{
             int idLobby = json.getInt(RequetesJSON.Attributs.Lobby.ID_LOBBY);

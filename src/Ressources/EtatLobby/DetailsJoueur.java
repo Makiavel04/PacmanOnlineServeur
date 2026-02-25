@@ -6,6 +6,9 @@ import Partie.Pacman.Agents.TypeAgent;
 import Ressources.RequetesJSON;
 import Ressources.TransformableJSON;
 
+/**
+ * Classe représentant les détails d'un joueur.
+ */
 public class DetailsJoueur implements TransformableJSON {
     private int idClient;
     private String username;
@@ -27,6 +30,11 @@ public class DetailsJoueur implements TransformableJSON {
     public boolean isBot() {return isBot;}
     public String getStrategie() {return strategie;}
 
+    /**
+     * Crée une instance de DetailsJoueur à partir d'un objet JSON.
+     * @param json L'objet JSON contenant les données du joueur.
+     * @return Une instance de DetailsJoueur ou null en cas d'erreur de parsing.
+     */
     public static DetailsJoueur fromJSON(JSONObject json){
         try{
             int idClient = json.getInt(RequetesJSON.Attributs.Joueur.ID_CLIENT);

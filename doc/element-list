@@ -1,0 +1,13 @@
+Client
+Controller
+Partie
+Partie.Pacman.Agents
+Partie.Pacman.Agents.Factory
+Partie.Pacman.Agents.Strategies
+Partie.Pacman.Agents.Strategies.Factory
+Partie.Pacman.Agents.Strategies.GhostOriginaux
+Partie.Pacman.Game
+Partie.Pacman.Helper
+Ressources
+Ressources.EtatGame
+Ressources.EtatLobby

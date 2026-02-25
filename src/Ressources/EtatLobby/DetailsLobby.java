@@ -7,7 +7,7 @@ import org.json.JSONObject;
 
 import Ressources.RequetesJSON;
 import Ressources.TransformableJSON;
-
+/** Classe représentant les détails d'un lobby */
 public class DetailsLobby implements TransformableJSON {
 
     private int idLobby;
@@ -49,6 +49,11 @@ public class DetailsLobby implements TransformableJSON {
     public ArrayList<DetailsJoueur> getJoueurs() {return joueurs;}
     public String getMap() {return map;}
 
+    /**
+     * Crée une instance de DetailsLobby à partir d'un objet JSON.
+     * @param json L'objet JSON contenant les données du lobby.
+     * @return Une instance de DetailsLobby ou une instance avec idLobby à -1 en cas d'erreur de parsing.
+     */
     public static DetailsLobby fromJSON(JSONObject json){
         if(json == null) {
             System.out.println("Error: JSON object is null");

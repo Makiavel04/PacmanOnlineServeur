@@ -5,7 +5,7 @@ import org.json.JSONObject;
 import Partie.Pacman.Agents.TypeAgent;
 import Ressources.RequetesJSON;
 import Ressources.TransformableJSON;
-
+/** Classe représentant le score à la fin d'une partie */
 public class ScoreFinPartie implements TransformableJSON{
     private TypeAgent vainqueur;
     private int scoreFantome;
@@ -21,6 +21,11 @@ public class ScoreFinPartie implements TransformableJSON{
     public int getScoreFantome() {return scoreFantome;}
     public int getScorePacman() {return scorePacman;}
 
+    /**
+     * Crée une instance de ScoreFinPartie à partir d'un objet JSON.œ
+     * @param json L'objet JSON contenant les données du score de fin de partie.
+     * @return Une instance de ScoreFinPartie ou null en cas d'erreur de parsing.
+     */
     public static ScoreFinPartie fromJSON(JSONObject json) {
         TypeAgent vainqueur = TypeAgent.valueOf(json.getString(RequetesJSON.Attributs.ScoreFinPartie.VAINQUEUR));
         int scoreFantome = json.getInt(RequetesJSON.Attributs.ScoreFinPartie.SCORE_FANTOME);
