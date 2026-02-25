@@ -2,16 +2,20 @@ package Partie;
 
 import Partie.Pacman.Agents.Agent;
 import Partie.Pacman.Agents.TypeAgent;
+import Partie.Pacman.Agents.Strategies.Strategie;
+import Partie.Pacman.Agents.Strategies.TypeStrategie;
 import Ressources.EtatLobby.DetailsJoueur;
 
 public class Bot implements Joueur {
     Agent agent;
+    TypeStrategie typeStrategie;
     TypeAgent typeAgent;
-    String nom;
+    int numBot;
 
-    public Bot(int num, TypeAgent typeAgent){
+    public Bot(int num, TypeAgent typeAgent, TypeStrategie typeStrategie) {
+        this.typeStrategie = typeStrategie;
         this.typeAgent = typeAgent;
-        this.nom = "Bot" + num;
+        this.numBot = num;
         this.agent = null;
     }
 
@@ -26,18 +30,42 @@ public class Bot implements Joueur {
     }
 
     @Override
-    public Agent getAgent() {
-        return agent;
+    public TypeStrategie getTypeStrategie() {
+        return this.typeStrategie;
+    }
+
+    public void setTypeStrategie(TypeStrategie typeStrategie) {
+        this.typeStrategie = typeStrategie;
     }
 
     @Override
-    public void setAgent(Agent agent) {
-        this.agent = agent;
+    public Strategie getStrategie() {
+        if(this.agent != null) {
+            return this.agent.getStrategie();
+        }else {
+            return null;
+        }
     }
 
     @Override
     public DetailsJoueur getDetailsJoueur() {
-        return new DetailsJoueur(-1, this.nom, this.typeAgent);
+        return new DetailsJoueur(this.getId(), this.getNom(), this.typeAgent, this.isBot(), this.getTypeStrategie().name());
+    }
+
+    public int getId() {
+        return -this.numBot;
+    }   
+
+    public int getNumBot() {
+        return numBot;
+    }
+
+    public String getNom() {
+        return "Bot #" + this.numBot;
+    }
+
+    public boolean isBot() {
+        return true;
     }
         
 }

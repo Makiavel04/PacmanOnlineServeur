@@ -3,8 +3,10 @@ package Partie.Pacman.Game;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Vector;
 import java.util.stream.Collectors;
 
+import Partie.Joueur;
 import Partie.Lobby;
 import Partie.Pacman.Agents.Agent;
 import Partie.Pacman.Agents.AgentAction;
@@ -13,6 +15,7 @@ import Partie.Pacman.Agents.AgentPacman;
 import Partie.Pacman.Agents.PositionAgent;
 import Partie.Pacman.Agents.TypeAgent;
 import Partie.Pacman.Agents.Factory.FactoryProviderAgent;
+import Partie.Pacman.Agents.Strategies.Strategie;
 import Partie.Pacman.Agents.Strategies.TypeStrategie;
 import Partie.Pacman.Agents.Strategies.Factory.FactoryProviderStrategie;
 import Ressources.EtatGame.EtatPacmanGame;
@@ -62,6 +65,9 @@ public class PacmanGame extends Game{
     }
     public void setNomLabyrinthe(String nom){
         this.nomLabyrinthe = nom;
+    }
+    public String getNomLabyrinthe(){
+        return this.nomLabyrinthe;
     }
 
     /**
@@ -150,16 +156,26 @@ public class PacmanGame extends Game{
         this.resetCapsule();
         this.resetLabyrinthe();
 
-        for(PositionAgent p : this.labyrinthe.getGhosts_start()){
-            Agent g = factoriesAgents.getFactory(TypeAgent.FANTOME).creerAgent(p);
-            g.setStrategie(factoriesStrategies.getFactory(TypeStrategie.GHOST_INTELLIGENT).creerStrategie(g));
-            addAgent(g);
+        Vector<Joueur> jPacmans = this.lobby.getPacmans();
+        Vector<Joueur> jFantomes = this.lobby.getFantomes();
+
+        for(int i=0; i<this.labyrinthe.getGhosts_start().size();  ++i){
+            PositionAgent p = this.labyrinthe.getGhosts_start().get(i); //Position de départ dans la map
+            Agent g = factoriesAgents.getFactory(TypeAgent.FANTOME).creerAgent(p); //Création de l'agent
+            Strategie s = factoriesStrategies.getFactory(jFantomes.get(i).getTypeStrategie()).creerStrategie(g); //Strat selon type de strat du joueur
+            g.setStrategie(s); //Affectation de la strat à l'agent
+
+            jFantomes.get(i).initJoueur(g); //Initialisation du joueur avec l'agent
+            addAgent(g); //Ajout de l'agent à la liste d'agents
         }
-        for(PositionAgent p : this.labyrinthe.getPacman_start()){
-            Agent m = factoriesAgents.getFactory(TypeAgent.PACMAN).creerAgent(p);
-            m.setStrategie(factoriesStrategies.getFactory(TypeStrategie.PACMAN_INTELLIGENT).creerStrategie(m));
+        for(int i=0; i<this.labyrinthe.getPacman_start().size(); ++i){
+            PositionAgent p = this.labyrinthe.getPacman_start().get(i); //Position de départ dans la map
+            Agent m = factoriesAgents.getFactory(TypeAgent.PACMAN).creerAgent(p); //Création de l'agent
+            Strategie s = factoriesStrategies.getFactory(jPacmans.get(i).getTypeStrategie()).creerStrategie(m); //Strat selon type de strat du joueur
+            m.setStrategie(s); //Affectation de la strat à l'agent
     
-            addAgent(m);
+            jPacmans.get(i).initJoueur(m); //Initialisation du joueur avec l'agent
+            addAgent(m); //Ajout de l'agent à la liste d'agents
         }
 
         System.out.println("Jeu initialisé.");
@@ -609,7 +625,7 @@ public class PacmanGame extends Game{
             this.getTurn(),
             this.getScorePacman(),
             this.getScoreGhost(),
-            this.labyrinthe.plateauToString(),
+            this.labyrinthe,
             this.getNbViesPacman(),
             this.isCapsuleActive()
         );

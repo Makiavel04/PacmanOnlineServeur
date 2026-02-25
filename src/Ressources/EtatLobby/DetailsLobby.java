@@ -23,7 +23,9 @@ public class DetailsLobby implements TransformableJSON {
 
     private ArrayList<DetailsJoueur> joueurs;
 
-    public DetailsLobby(int idLobby, int nbJoueur, int nbMaxJoueur, int nbMaxPacman, int nbPacman, int nbMaxFantome, int nbFantome, int idHost, ArrayList<DetailsJoueur> joueurs) {
+    private String map;
+
+    public DetailsLobby(int idLobby, int nbJoueur, int nbMaxJoueur, int nbMaxPacman, int nbPacman, int nbMaxFantome, int nbFantome, int idHost, ArrayList<DetailsJoueur> joueurs, String map) {
         this.idLobby = idLobby;
         this.nbJoueur = nbJoueur;
         this.nbMaxJoueur = nbMaxJoueur;
@@ -33,6 +35,7 @@ public class DetailsLobby implements TransformableJSON {
         this.nbFantome = nbFantome;
         this.idHost = idHost;
         this.joueurs = joueurs;
+        this.map = map;
     }
 
     public int getIdLobby() {return idLobby;}
@@ -44,6 +47,7 @@ public class DetailsLobby implements TransformableJSON {
     public int getNbFantome() {return nbFantome;}
     public int getNbMaxFantome() {return nbMaxFantome;}
     public ArrayList<DetailsJoueur> getJoueurs() {return joueurs;}
+    public String getMap() {return map;}
 
     public static DetailsLobby fromJSON(JSONObject json){
         if(json == null) {
@@ -54,7 +58,7 @@ public class DetailsLobby implements TransformableJSON {
         int idLobby = json.optInt(RequetesJSON.Attributs.Lobby.ID_LOBBY, -1);
 
         if(idLobby == -1) {
-            return new DetailsLobby(-1,0,0,0,0,0,0,-1,new ArrayList<DetailsJoueur>());
+            return new DetailsLobby(-1,0,0,0,0,0,0,-1,new ArrayList<DetailsJoueur>(),"");
         }
 
         try{
@@ -70,10 +74,11 @@ public class DetailsLobby implements TransformableJSON {
             int nbPacman = json.getInt(RequetesJSON.Attributs.Lobby.NB_PACMAN);
             int nbMaxFantome = json.getInt(RequetesJSON.Attributs.Lobby.NB_MAX_FANTOME);
             int nbFantome = json.getInt(RequetesJSON.Attributs.Lobby.NB_FANTOME);  
-            return new DetailsLobby(idLobby, nbJoueur, nbMaxJoueur, nbMaxPacman, nbPacman, nbMaxFantome, nbFantome, idHost, joueurs);
+            String map = json.getString(RequetesJSON.Attributs.Lobby.MAP);
+            return new DetailsLobby(idLobby, nbJoueur, nbMaxJoueur, nbMaxPacman, nbPacman, nbMaxFantome, nbFantome, idHost, joueurs, map);
         }catch(Exception e){
             System.out.println("Error parsing JSON to DetailsLobby: " + e.getMessage());
-            return new DetailsLobby(-1,0,0,0,0,0,0,-1,new ArrayList<DetailsJoueur>());
+            return new DetailsLobby(-1,0,0,0,0,0,0,-1,new ArrayList<DetailsJoueur>(),"");
         }
     }
     
@@ -93,6 +98,7 @@ public class DetailsLobby implements TransformableJSON {
         json.put(RequetesJSON.Attributs.Lobby.NB_PACMAN, this.nbPacman);
         json.put(RequetesJSON.Attributs.Lobby.NB_MAX_FANTOME, this.nbMaxFantome);
         json.put(RequetesJSON.Attributs.Lobby.NB_FANTOME, this.nbFantome);  
+        json.put(RequetesJSON.Attributs.Lobby.MAP, this.map);
         return json;
     }
 }

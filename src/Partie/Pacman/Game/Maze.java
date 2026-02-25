@@ -7,10 +7,15 @@ import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import Partie.Pacman.Agents.PositionAgent;
+import Ressources.RequetesJSON;
+import Ressources.TransformableJSON;
 
 
-public class Maze implements Serializable, Cloneable {
+public class Maze implements Serializable, Cloneable, TransformableJSON {
 
 	private static final long serialVersionUID = 1L;
 	/**
@@ -127,6 +132,16 @@ public class Maze implements Serializable, Cloneable {
 			e.printStackTrace();
 			throw new Exception("Probleme a la lecture du fichier: " + e.getMessage());
 		}
+	}
+
+	private Maze(int s_x, int s_y, boolean[][] walls, boolean[][] food, boolean[][] capsules, ArrayList<PositionAgent> pacman_start, ArrayList<PositionAgent> ghosts_start) {
+		this.size_x = s_x;
+		this.size_y = s_y;
+		this.walls = walls;
+		this.food = food;
+		this.capsules = capsules;
+		this.pacman_start = pacman_start;
+		this.ghosts_start = ghosts_start;
 	}
 
 	/**
@@ -261,6 +276,89 @@ public class Maze implements Serializable, Cloneable {
 	@Override
 	public Object clone() throws CloneNotSupportedException {
 		return (Maze) super.clone();
+	}
+
+	// --- JSON ---
+	public static Maze fromJSON(JSONObject json) {
+		try{
+			int size_x = json.getInt(RequetesJSON.Attributs.Plateau.SIZE_X);
+			int size_y = json.getInt(RequetesJSON.Attributs.Plateau.SIZE_Y);
+
+			boolean[][] walls = new boolean[size_x][size_y];
+			JSONArray jsonWalls = json.getJSONArray(RequetesJSON.Attributs.Plateau.WALLS);
+			for (int i = 0; i < size_x; i++) {
+				for (int j = 0; j < size_y; j++) {
+					walls[i][j] = jsonWalls.getJSONArray(i).getBoolean(j);
+				}
+			}
+
+			boolean[][] food = new boolean[size_x][size_y];
+			JSONArray jsonFood = json.getJSONArray(RequetesJSON.Attributs.Plateau.FOOD);
+			for (int i = 0; i < size_x; i++) {
+				for (int j = 0; j < size_y; j++) {
+					food[i][j] = jsonFood.getJSONArray(i).getBoolean(j);
+				}
+			}
+
+			boolean[][] capsules = new boolean[size_x][size_y];
+			JSONArray jsonCapsules = json.getJSONArray(RequetesJSON.Attributs.Plateau.CAPSULES);
+			for (int i = 0; i < size_x; i++) {
+				for (int j = 0; j < size_y; j++) {
+					capsules[i][j] = jsonCapsules.getJSONArray(i).getBoolean(j);
+				}
+			}
+
+			ArrayList<PositionAgent> pacman_start = new ArrayList<>();
+			JSONArray jsonPacmanPos = json.getJSONArray(RequetesJSON.Attributs.Plateau.PACMAN_START);
+	        for (int i = 0; i < jsonPacmanPos.length(); i++) {
+	            pacman_start.add(PositionAgent.fromJSON(jsonPacmanPos.getJSONObject(i)));
+	        }
+
+	        ArrayList<PositionAgent> ghosts_start = new ArrayList<>();
+			JSONArray jsonGhostsPos = json.getJSONArray(RequetesJSON.Attributs.Plateau.GHOSTS_START);
+	        for (int i = 0; i < jsonGhostsPos.length(); i++) {
+	            ghosts_start.add(PositionAgent.fromJSON(jsonGhostsPos.getJSONObject(i)));
+			}
+
+			return new Maze(size_x, size_y, walls, food, capsules, pacman_start, ghosts_start);
+		}catch(Exception e){
+			System.out.println("Error parsing JSON to Maze: " + e.getMessage());
+			return null;
+		}
+	}
+
+	@Override
+	public JSONObject toJSON() {
+		JSONObject json = new JSONObject();
+
+		json.put(RequetesJSON.Attributs.Plateau.SIZE_X, this.size_x);
+		json.put(RequetesJSON.Attributs.Plateau.SIZE_Y, this.size_y);
+
+		JSONArray jsonWalls = new JSONArray(this.walls);
+		json.put(RequetesJSON.Attributs.Plateau.WALLS, jsonWalls);
+
+		JSONArray jsonFood = new JSONArray(this.food);
+		json.put(RequetesJSON.Attributs.Plateau.FOOD, jsonFood);
+
+		JSONArray jsonCapsules = new JSONArray(this.capsules);
+		json.put(RequetesJSON.Attributs.Plateau.CAPSULES, jsonCapsules);
+
+
+		JSONArray jsonPacmanPos = new JSONArray();
+        for (PositionAgent pos : this.pacman_start) {
+            JSONObject posJson = pos.toJSON();
+            jsonPacmanPos.put(posJson);
+        }
+		json.put(RequetesJSON.Attributs.Plateau.PACMAN_START, jsonPacmanPos);
+
+        JSONArray jsonGhostsPos = new JSONArray();
+        for (PositionAgent pos : this.ghosts_start) {
+            JSONObject posJson = pos.toJSON();
+            jsonGhostsPos.put(posJson);
+        }
+		json.put(RequetesJSON.Attributs.Plateau.GHOSTS_START, jsonGhostsPos);
+
+		return json;
 	}
 	
 }

@@ -31,6 +31,7 @@ public class ServerController {
             System.out.println("Serveur lancé sur le port: " + this.port);
             while (true) {
                 Socket so = this.ecoute.accept();
+                so.setTcpNoDelay(true);
                 ClientHandler clientHandler = new ClientHandler(so, this);
                 clientHandler.ouvrirConnection();
                 synchronized (this.clients) {

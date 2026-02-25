@@ -2,6 +2,7 @@ package Client;
 import java.io.IOException;
 import java.net.Socket;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import Controller.ServerController;
@@ -9,7 +10,10 @@ import Partie.Joueur;
 import Partie.Lobby;
 import Partie.Pacman.Agents.Agent;
 import Partie.Pacman.Agents.TypeAgent;
+import Partie.Pacman.Agents.Strategies.Strategie;
+import Partie.Pacman.Agents.Strategies.TypeStrategie;
 import Ressources.RequetesJSON;
+import Ressources.EtatGame.EtatPacmanGame;
 import Ressources.EtatLobby.DetailsJoueur;
 
 public class ClientHandler implements Joueur{
@@ -27,7 +31,7 @@ public class ClientHandler implements Joueur{
     private Agent agent;
 
     public ClientHandler(Socket so, ServerController sc) {
-        this.idClient = ClientHandler.idCpt++;
+        this.idClient = ++ClientHandler.idCpt;
         this.serverController = sc;
         this.lobby = null;
         this.so = so;
@@ -52,8 +56,12 @@ public class ClientHandler implements Joueur{
         this.lobby = lobby;
     }
 
+    public boolean isBot() {
+        return false;
+    }
+
     public DetailsJoueur getDetailsJoueur() {
-        return new DetailsJoueur(this.idClient, this.username, this.typeAgent);
+        return new DetailsJoueur(this.idClient, this.username, this.typeAgent, this.isBot(), this.getTypeStrategie().name());
     }
 
     // --- Gestion de la connection ---
@@ -125,6 +133,19 @@ public class ClientHandler implements Joueur{
             case (RequetesJSON.ASK_CHANGEMENT_CAMP):
                 System.out.println("Client#" + this.getID() + " demande le changement de camp");
                 this.demanderChangementCamp(objReq);
+                break;
+            case (RequetesJSON.SEND_DEPLACEMENT) :
+                System.out.println("Client#" + this.getID() + " envoie une action de déplacement");
+                this.traiterDeplacement(objReq);
+                break;
+            case (RequetesJSON.ASK_CHANGER_STRATEGIE_BOT):
+                System.out.println("Client#" + this.getID() + " demande le changement de stratégie d'un bot");
+                this.demanderChangementStrategieBot(objReq);
+                break;
+            case (RequetesJSON.ASK_CHANGEMENT_MAP):
+                System.out.println("Client#" + this.getID() + " demande le changement de map");
+                this.demanderChangementMap(objReq);
+                break;
             default:
                 break;
         }
@@ -161,6 +182,9 @@ public class ClientHandler implements Joueur{
             
             objResp = lobby.getDetailsLobby().toJSON();
             objResp.put(RequetesJSON.Attributs.ACTION, RequetesJSON.RES_DEMANDE_PARTIE);
+            objResp.put(RequetesJSON.Attributs.Lobby.STRATS_PACMAN, TypeStrategie.getNomStrategieCompatibles(TypeAgent.PACMAN));
+            objResp.put(RequetesJSON.Attributs.Lobby.STRATS_FANTOME, TypeStrategie.getNomStrategieCompatibles(TypeAgent.FANTOME));
+            objResp.put(RequetesJSON.Attributs.Lobby.LISTE_MAPS_DISPONIBLES, lobby.getListeMaps());
 
         }catch (Exception e) {
             System.out.println("Pas de match trouvé pour le client#" + idClient);
@@ -168,6 +192,9 @@ public class ClientHandler implements Joueur{
             objResp = new JSONObject();
             objResp.put(RequetesJSON.Attributs.ACTION, RequetesJSON.RES_DEMANDE_PARTIE);
             objResp.put(RequetesJSON.Attributs.Lobby.ID_LOBBY, -1);
+            objResp.put(RequetesJSON.Attributs.Lobby.STRATS_PACMAN, new JSONArray());
+            objResp.put(RequetesJSON.Attributs.Lobby.STRATS_FANTOME, new JSONArray());
+            objResp.put(RequetesJSON.Attributs.Lobby.LISTE_MAPS_DISPONIBLES, new JSONArray());
         }
         this.issuer.envoyerRequete(objResp.toString());
     }
@@ -182,8 +209,8 @@ public class ClientHandler implements Joueur{
         this.serverController.verifierLancementMatch(idLobby, this.idClient);
     }
 
-    public void debutPartie() {
-        JSONObject objResp = new JSONObject();
+    public void debutPartie(EtatPacmanGame etatinit) {
+        JSONObject objResp = etatinit.toJSON();
         objResp.put(RequetesJSON.Attributs.ACTION, RequetesJSON.DEBUT_PARTIE);
         //Etat init du jeu à envoyer au client ?
         this.issuer.envoyerRequete(objResp.toString());
@@ -215,8 +242,35 @@ public class ClientHandler implements Joueur{
         }
     }
 
+    public void demanderChangementStrategieBot(JSONObject objReq) {
+        TypeStrategie typeStrategie = TypeStrategie.valueOf(objReq.getString(RequetesJSON.Attributs.Lobby.TYPE_STRATEGIE));
+        int numBot = objReq.getInt(RequetesJSON.Attributs.Lobby.NUM_BOT);
+        this.lobby.setStrategieBot(this.idClient, numBot, typeStrategie);
+    }
+
     public void demanderChangementCamp(JSONObject objReq) {
         this.lobby.changerCamp(this);
+    }
+
+    public void traiterDeplacement(JSONObject objReq) {
+        int direction = objReq.getInt(RequetesJSON.Attributs.Partie.SENS_MOUVEMENT);
+        if(this.agent != null){
+            this.agent.getStrategie().onKeyPressed(direction);
+        }
+    }
+
+    public void demanderChangementMap(JSONObject objReq) {
+        String nomMap = objReq.getString(RequetesJSON.Attributs.Lobby.MAP);
+        this.lobby.changerMap(this, nomMap);
+    }
+
+    public void autorisationChangementMap(boolean autorise, int nbPacmanMax, int nbFantomeMax) {
+        JSONObject objResp = new JSONObject();
+        objResp.put(RequetesJSON.Attributs.ACTION, RequetesJSON.RES_CHANGEMENT_MAP);
+        objResp.put(RequetesJSON.Attributs.Lobby.AUTORISE_CHANGEMENT, autorise);
+        objResp.put(RequetesJSON.Attributs.Lobby.NB_MAX_PACMAN, nbPacmanMax);
+        objResp.put(RequetesJSON.Attributs.Lobby.NB_MAX_FANTOME, nbFantomeMax);
+        this.issuer.envoyerRequete(objResp.toString());
     }
 
     // --- Joueur ---
@@ -234,15 +288,17 @@ public class ClientHandler implements Joueur{
     }
 
     @Override
-    public Agent getAgent() {
-        return this.agent;
+    public TypeStrategie getTypeStrategie() {
+        return TypeStrategie.CONTROLEE1; //Pour le client la stratégie est toujours contrôlée, c'est le client qui décide de l'action à faire
     }
 
     @Override
-    public void setAgent(Agent agent) {
-        this.agent = agent;
+    public Strategie getStrategie() {
+        if(this.agent != null) {
+            return this.agent.getStrategie();
+        }else {
+            return null;
+        }
     }
-
-    
-    
+     
 }

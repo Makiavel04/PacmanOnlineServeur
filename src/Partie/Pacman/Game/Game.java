@@ -13,7 +13,7 @@ public abstract class Game implements Runnable{
     boolean isRunning;
     int intervalle;
     /** intervalle par defaut entre 2 tours */
-    public static int DEFAULT_INTERVALLE = 1000; //en ms
+    public static int DEFAULT_INTERVALLE = 500; //en ms
 
     Thread thread;
     Lobby lobby;
@@ -73,13 +73,13 @@ public abstract class Game implements Runnable{
     public void run(){
         while(this.isRunning()){
             this.step();
+            this.lobby.notifierTour(this.getEtat());
             try{
                 Thread.sleep(this.intervalle);
             }catch(InterruptedException e){
                 System.out.println(e.getMessage());
             }
 
-            this.lobby.notifierTour(this.getEtat());
         }
     }
 

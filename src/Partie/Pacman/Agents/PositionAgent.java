@@ -2,8 +2,13 @@ package Partie.Pacman.Agents;
 
 import java.io.Serializable;
 
+import org.json.JSONObject;
+
+import Ressources.RequetesJSON;
+import Ressources.TransformableJSON;
+
 /** Position d'un agent */
-public class PositionAgent implements Serializable {
+public class PositionAgent implements Serializable, TransformableJSON{
 
 	private static final long serialVersionUID = 1L;
 
@@ -64,5 +69,29 @@ public class PositionAgent implements Serializable {
 	public boolean equals(PositionAgent other) {
 		return (x == other.x) && (y == other.y);
 	}
+
+
+	// --- JSON ---
+	public static PositionAgent fromJSON(JSONObject json) {
+		try {
+			int x = json.getInt(RequetesJSON.Attributs.PositionAgent.X);
+			int y = json.getInt(RequetesJSON.Attributs.PositionAgent.Y);
+			int dir = json.getInt(RequetesJSON.Attributs.PositionAgent.DIR);
+			return new PositionAgent(x, y, dir);
+		} catch (Exception e) {
+			System.out.println("Error parsing JSON to PositionAgent: " + e.getMessage());
+			return null;
+		}
+	}
+	
+	@Override
+	public JSONObject toJSON() {
+		JSONObject json = new JSONObject();
+		json.put(RequetesJSON.Attributs.PositionAgent.X, this.x);
+		json.put(RequetesJSON.Attributs.PositionAgent.Y, this.y);
+		json.put(RequetesJSON.Attributs.PositionAgent.DIR, this.dir);
+		return json;
+	}
+
 
 }

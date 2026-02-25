@@ -8,11 +8,18 @@ import Partie.Pacman.Game.PacmanGame;
 
 /**Stratégie de contrôle au clavier */
 public class StrategieControlee extends Strategie {
-    private AgentAction action;
+    private static final AgentAction ACT_NORTH = new AgentAction(AgentAction.NORTH);
+    private static final AgentAction ACT_SOUTH = new AgentAction(AgentAction.SOUTH);
+    private static final AgentAction ACT_WEST  = new AgentAction(AgentAction.WEST);
+    private static final AgentAction ACT_EAST  = new AgentAction(AgentAction.EAST);
+    private static final AgentAction ACT_STOP  = new AgentAction(AgentAction.STOP);
+
+    private volatile AgentAction action;
+
 
     public StrategieControlee(Agent a){
         super(a);
-        this.action = new AgentAction(4); //Par défaut, ne rien faire
+        this.action = ACT_STOP; //Par défaut, ne rien faire
     }
 
     public void setAction(AgentAction action){
@@ -36,26 +43,27 @@ public class StrategieControlee extends Strategie {
     public void onKeyPressed(int keyCode) {
         switch (keyCode) {
             case KeyEvent.VK_UP -> {
-                action = new AgentAction(AgentAction.NORTH);
+                action = ACT_NORTH;
                 //System.out.println("haut");
             }
             case KeyEvent.VK_DOWN -> {
-                action = new AgentAction(AgentAction.SOUTH);
+                action = ACT_SOUTH;
                 //System.out.println("bas");
             }
             case KeyEvent.VK_LEFT -> {
-                action = new AgentAction(AgentAction.WEST);
+                action = ACT_WEST;
                 //System.out.println("gauche");
             }
             case KeyEvent.VK_RIGHT -> {
-                action = new AgentAction(AgentAction.EAST);
+                action = ACT_EAST;
                 //System.out.println("droite");
             }
             case KeyEvent.VK_ENTER -> {
-                action = new AgentAction(AgentAction.STOP);
+                action = ACT_STOP;
                 //System.out.println("stop");
             }
         }
+        System.out.println("Action : Changement de direction");
     }
     @Override
     public void capsuleActivee(){}
