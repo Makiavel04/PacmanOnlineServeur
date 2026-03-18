@@ -10,13 +10,13 @@ import Controller.ServerController;
 import Partie.Joueur;
 import Partie.Lobby;
 import Partie.Pacman.Agents.Agent;
-import Partie.Pacman.Agents.TypeAgent;
 import Partie.Pacman.Agents.Strategies.Strategie;
 import Partie.Pacman.Agents.Strategies.TypeStrategie;
-import Ressources.RequetesJSON;
-import Ressources.EtatGame.EtatPacmanGame;
-import Ressources.EtatLobby.DetailsJoueur;
-import Ressources.EtatLobby.ScoreFinPartie;
+import pacman.online.commun.dto.RequetesJSON;
+import pacman.online.commun.dto.game.EtatPacmanGame;
+import pacman.online.commun.dto.lobby.BilanPartie;
+import pacman.online.commun.dto.lobby.DetailsJoueur;
+import pacman.online.commun.moteur.TypeAgent;
 
 /**
  * Point de connection et d'échange entre serveur et client.
@@ -33,6 +33,7 @@ public class ClientHandler implements Joueur{
     private ClientIssuer issuer;
     private Socket so;
     private String username;
+    private String couleur;
 
     /** Type de l'agent joué par le client */
     private TypeAgent typeAgent;
@@ -46,11 +47,12 @@ public class ClientHandler implements Joueur{
         this.so = so;
         this.listener = new ClientListener(so, this);
         this.issuer = new ClientIssuer(so, this);
+        this.couleur = null;
         System.out.println("New client#" + idClient + " created");
     }
 
     //--- Getters et setters ---
-    public int getID() {
+    public int getId() {
         return this.idClient;
     }
     
@@ -72,6 +74,13 @@ public class ClientHandler implements Joueur{
     /** Retourne les détails du joueur pour l'affichage chez le client */
     public DetailsJoueur getDetailsJoueur() {
         return new DetailsJoueur(this.idClient, this.username, this.typeAgent, this.isBot(), this.getTypeStrategie().name());
+    }
+
+    public void setCouleur(String couleur) {
+        this.couleur = couleur;
+    }
+    public String getCouleur() {
+        return this.couleur;
     }
 
     // --- Gestion de la connection ---
@@ -128,49 +137,49 @@ public class ClientHandler implements Joueur{
     public void gestionReception(String action, JSONObject objReq) {
         switch (action) {
             case (RequetesJSON.ASK_AUTHENTIFICATION):
-                System.out.println("Client#" + this.getID() + " demande d'authentification");
+                System.out.println("Client#" + this.getId() + " demande d'authentification");
                 this.demanderAuthentification(objReq);
                 break;
             case (RequetesJSON.ASK_LISTE_LOBBIES):
-                System.out.println("Client#" + this.getID() + " demande la liste des lobbies");
+                System.out.println("Client#" + this.getId() + " demande la liste des lobbies");
                 this.listerLobbies();
                 break;
             case(RequetesJSON.ASK_DEMANDE_PARTIE):
-                System.out.println("Client#" + this.getID() + " demande une partie");
+                System.out.println("Client#" + this.getId() + " demande une partie");
                 this.demanderMatch(objReq);
                 break;
             case(RequetesJSON.QUITTER_LOBBY):
-                System.out.println("Client#" + this.getID() + " demande à quitter le lobby");
+                System.out.println("Client#" + this.getId() + " demande à quitter le lobby");
                 this.quitterLobby(objReq);
                 break;
             case(RequetesJSON.ASK_LANCEMENT_PARTIE):
-                System.out.println("Client#" + this.getID() + " demande le lancement de la partie");
+                System.out.println("Client#" + this.getId() + " demande le lancement de la partie");
                 this.demanderLancementPartie(objReq);
                 break;
             case ("envoyerAction"):
                 break;
             case (RequetesJSON.ASK_AJOUT_BOT):
-                System.out.println("Client#" + this.getID() + " demande l'ajout d'un bot");
+                System.out.println("Client#" + this.getId() + " demande l'ajout d'un bot");
                 this.demanderAjoutBot(objReq);
                 break;
             case (RequetesJSON.ASK_RETRAIT_BOT):
-                System.out.println("Client#" + this.getID() + " demande le retrait d'un bot");
+                System.out.println("Client#" + this.getId() + " demande le retrait d'un bot");
                 this.demanderRetraitBot(objReq);
                 break;
             case (RequetesJSON.ASK_CHANGEMENT_CAMP):
-                System.out.println("Client#" + this.getID() + " demande le changement de camp");
+                System.out.println("Client#" + this.getId() + " demande le changement de camp");
                 this.demanderChangementCamp(objReq);
                 break;
             case (RequetesJSON.SEND_DEPLACEMENT) :
-                System.out.println("Client#" + this.getID() + " envoie une action de déplacement");
+                System.out.println("Client#" + this.getId() + " envoie une action de déplacement");
                 this.traiterDeplacement(objReq);
                 break;
             case (RequetesJSON.ASK_CHANGER_STRATEGIE_BOT):
-                System.out.println("Client#" + this.getID() + " demande le changement de stratégie d'un bot");
+                System.out.println("Client#" + this.getId() + " demande le changement de stratégie d'un bot");
                 this.demanderChangementStrategieBot(objReq);
                 break;
             case (RequetesJSON.ASK_CHANGEMENT_MAP):
-                System.out.println("Client#" + this.getID() + " demande le changement de map");
+                System.out.println("Client#" + this.getId() + " demande le changement de map");
                 this.demanderChangementMap(objReq);
                 break;
             default:
@@ -183,17 +192,18 @@ public class ClientHandler implements Joueur{
      * @param objReq corps de la requête
      */
     public void demanderAuthentification(JSONObject objReq) {
-        String username = objReq.getString(RequetesJSON.Attributs.Authentification.USERNAME);
-        String password = objReq.getString(RequetesJSON.Attributs.Authentification.PASSWORD);
+        String username = objReq.getString(RequetesJSON.Attributs.AuthentificationAttr.USERNAME);
+        String password = objReq.getString(RequetesJSON.Attributs.AuthentificationAttr.PASSWORD);
         boolean authResult = this.serverController.demandeAuthentification(username, password);
         System.out.println("Resultat d'authentification pour le client#" + idClient + " : " + authResult);
         JSONObject objResp = new JSONObject();
         objResp.put(RequetesJSON.Attributs.ACTION, RequetesJSON.RES_AUTHENTIFICATION);
-        objResp.put(RequetesJSON.Attributs.Authentification.USERNAME, username);
-        objResp.put(RequetesJSON.Attributs.Authentification.ID_CLIENT, idClient);
-        objResp.put(RequetesJSON.Attributs.Authentification.RESULTAT, authResult);
+        objResp.put(RequetesJSON.Attributs.AuthentificationAttr.USERNAME, username);
+        objResp.put(RequetesJSON.Attributs.AuthentificationAttr.ID_CLIENT, idClient);
+        objResp.put(RequetesJSON.Attributs.AuthentificationAttr.RESULTAT, authResult);
         if(authResult) {
             this.setUsername(username);
+            this.setCouleur("#09ff00"); //Changer la couleur en foncitn de celle active
         }
         this.issuer.envoyerRequete(objResp.toString());
     }
@@ -209,7 +219,7 @@ public class ClientHandler implements Joueur{
         for(Lobby lobby : lobbies) {
             arrLobbies.put(lobby.getDetailsLobby().toJSON());
         }
-        objResp.put(RequetesJSON.Attributs.Lobby.LISTE_LOBBIES, arrLobbies);
+        objResp.put(RequetesJSON.Attributs.LobbyAttr.LISTE_LOBBIES, arrLobbies);
         this.issuer.envoyerRequete(objResp.toString());
     }
 
@@ -220,26 +230,26 @@ public class ClientHandler implements Joueur{
     public void demanderMatch(JSONObject objReq) {
         JSONObject objResp = null;
         try {
-            int idLobby = objReq.getInt(RequetesJSON.Attributs.Lobby.ID_LOBBY);
+            int idLobby = objReq.getInt(RequetesJSON.Attributs.LobbyAttr.ID_LOBBY);
             Lobby lobby = this.serverController.demandeDeMatch(this, idLobby);
-            System.out.println("Client#" + idClient + " connecté au lobby#" + lobby.getID());
+            System.out.println("Client#" + idClient + " connecté au lobby#" + lobby.getId());
             this.setLobby(lobby);
             
             objResp = lobby.getDetailsLobby().toJSON();
             objResp.put(RequetesJSON.Attributs.ACTION, RequetesJSON.RES_DEMANDE_PARTIE);
-            objResp.put(RequetesJSON.Attributs.Lobby.STRATS_PACMAN, TypeStrategie.getNomStrategieCompatibles(TypeAgent.PACMAN));
-            objResp.put(RequetesJSON.Attributs.Lobby.STRATS_FANTOME, TypeStrategie.getNomStrategieCompatibles(TypeAgent.FANTOME));
-            objResp.put(RequetesJSON.Attributs.Lobby.LISTE_MAPS_DISPONIBLES, lobby.getListeMaps());
+            objResp.put(RequetesJSON.Attributs.LobbyAttr.STRATS_PACMAN, TypeStrategie.getNomStrategieCompatibles(TypeAgent.PACMAN));
+            objResp.put(RequetesJSON.Attributs.LobbyAttr.STRATS_FANTOME, TypeStrategie.getNomStrategieCompatibles(TypeAgent.FANTOME));
+            objResp.put(RequetesJSON.Attributs.LobbyAttr.LISTE_MAPS_DISPONIBLES, lobby.getListeMaps());
 
         }catch (Exception e) {
             System.out.println("Pas de match trouvé pour le client#" + idClient);
             e.printStackTrace();
             objResp = new JSONObject();
             objResp.put(RequetesJSON.Attributs.ACTION, RequetesJSON.RES_DEMANDE_PARTIE);
-            objResp.put(RequetesJSON.Attributs.Lobby.ID_LOBBY, -1);
-            objResp.put(RequetesJSON.Attributs.Lobby.STRATS_PACMAN, new JSONArray());
-            objResp.put(RequetesJSON.Attributs.Lobby.STRATS_FANTOME, new JSONArray());
-            objResp.put(RequetesJSON.Attributs.Lobby.LISTE_MAPS_DISPONIBLES, new JSONArray());
+            objResp.put(RequetesJSON.Attributs.LobbyAttr.ID_LOBBY, -1);
+            objResp.put(RequetesJSON.Attributs.LobbyAttr.STRATS_PACMAN, new JSONArray());
+            objResp.put(RequetesJSON.Attributs.LobbyAttr.STRATS_FANTOME, new JSONArray());
+            objResp.put(RequetesJSON.Attributs.LobbyAttr.LISTE_MAPS_DISPONIBLES, new JSONArray());
         }
         this.issuer.envoyerRequete(objResp.toString());
     }
@@ -249,8 +259,8 @@ public class ClientHandler implements Joueur{
      * @param objReq corps de la requête
      */
     public void quitterLobby(JSONObject objReq) {
-        int idLobby = objReq.getInt(RequetesJSON.Attributs.Lobby.ID_LOBBY);
-        if(this.lobby != null && idLobby == this.lobby.getID()) {
+        int idLobby = objReq.getInt(RequetesJSON.Attributs.LobbyAttr.ID_LOBBY);
+        if(this.lobby != null && idLobby == this.lobby.getId()) {
             this.lobby.disconnectClient(this.idClient);
             this.setLobby(null);
             this.agent = null; //Efface l'agent pour éviter les soucis si on relance une partie
@@ -275,7 +285,7 @@ public class ClientHandler implements Joueur{
      * @param objReq corps de la requête
      */
     public void demanderLancementPartie(JSONObject objReq) {
-        int idLobby = objReq.getInt(RequetesJSON.Attributs.Lobby.ID_LOBBY);
+        int idLobby = objReq.getInt(RequetesJSON.Attributs.LobbyAttr.ID_LOBBY);
         this.serverController.verifierLancementMatch(idLobby, this.idClient);
     }
 
@@ -302,7 +312,7 @@ public class ClientHandler implements Joueur{
      * Signal la fin de partie au client et envoie le score
      * @param score résultat de la partie
      */
-    public void finPartie(ScoreFinPartie score) {
+    public void finPartie(BilanPartie score) {
         JSONObject objResp = score.toJSON();
         objResp.put(RequetesJSON.Attributs.ACTION, RequetesJSON.FIN_PARTIE);
         //Etat final du jeu à envoyer au client ?
@@ -315,7 +325,7 @@ public class ClientHandler implements Joueur{
      * @param objReq corps de la requête
      */
     public void demanderAjoutBot(JSONObject objReq){
-        String type = objReq.getString(RequetesJSON.Attributs.Joueur.TYPE_AGENT);
+        String type = objReq.getString(RequetesJSON.Attributs.JoueurAttr.TYPE_AGENT);
         TypeAgent typeAgent = TypeAgent.valueOf(type);
         if(this.lobby != null) {
             this.lobby.ajouterBot(typeAgent, this.idClient);
@@ -327,7 +337,7 @@ public class ClientHandler implements Joueur{
      * @param objReq corps de la requête
      */
     public void demanderRetraitBot(JSONObject objReq){
-        String type = objReq.getString(RequetesJSON.Attributs.Joueur.TYPE_AGENT);
+        String type = objReq.getString(RequetesJSON.Attributs.JoueurAttr.TYPE_AGENT);
         TypeAgent typeAgent = TypeAgent.valueOf(type);
         if(this.lobby != null) {
             this.lobby.retirerBot(typeAgent, this.idClient);
@@ -339,8 +349,8 @@ public class ClientHandler implements Joueur{
      * @param objReq corps de la requête
      */
     public void demanderChangementStrategieBot(JSONObject objReq) {
-        TypeStrategie typeStrategie = TypeStrategie.valueOf(objReq.getString(RequetesJSON.Attributs.Lobby.TYPE_STRATEGIE));
-        int numBot = objReq.getInt(RequetesJSON.Attributs.Lobby.NUM_BOT);
+        TypeStrategie typeStrategie = TypeStrategie.valueOf(objReq.getString(RequetesJSON.Attributs.LobbyAttr.TYPE_STRATEGIE));
+        int numBot = objReq.getInt(RequetesJSON.Attributs.LobbyAttr.NUM_BOT);
         this.lobby.setStrategieBot(this.idClient, numBot, typeStrategie);
     }
 
@@ -357,7 +367,7 @@ public class ClientHandler implements Joueur{
      * @param objReq corps de la requête contenant la direction du déplacement demandée par le client
      */
     public void traiterDeplacement(JSONObject objReq) {
-        int direction = objReq.getInt(RequetesJSON.Attributs.Partie.SENS_MOUVEMENT);
+        int direction = objReq.getInt(RequetesJSON.Attributs.PartieAttr.SENS_MOUVEMENT);
         if(this.agent != null){
             this.agent.getStrategie().onKeyPressed(direction);
         }
@@ -368,7 +378,7 @@ public class ClientHandler implements Joueur{
      * @param objReq corps de la requête
      */
     public void demanderChangementMap(JSONObject objReq) {
-        String nomMap = objReq.getString(RequetesJSON.Attributs.Lobby.MAP);
+        String nomMap = objReq.getString(RequetesJSON.Attributs.LobbyAttr.MAP);
         this.lobby.changerMap(this, nomMap);
     }
 
@@ -381,9 +391,9 @@ public class ClientHandler implements Joueur{
     public void autorisationChangementMap(boolean autorise, int nbPacmanMax, int nbFantomeMax) {
         JSONObject objResp = new JSONObject();
         objResp.put(RequetesJSON.Attributs.ACTION, RequetesJSON.RES_CHANGEMENT_MAP);
-        objResp.put(RequetesJSON.Attributs.Lobby.AUTORISE_CHANGEMENT, autorise);
-        objResp.put(RequetesJSON.Attributs.Lobby.NB_MAX_PACMAN, nbPacmanMax);
-        objResp.put(RequetesJSON.Attributs.Lobby.NB_MAX_FANTOME, nbFantomeMax);
+        objResp.put(RequetesJSON.Attributs.LobbyAttr.AUTORISE_CHANGEMENT, autorise);
+        objResp.put(RequetesJSON.Attributs.LobbyAttr.NB_MAX_PACMAN, nbPacmanMax);
+        objResp.put(RequetesJSON.Attributs.LobbyAttr.NB_MAX_FANTOME, nbFantomeMax);
         this.issuer.envoyerRequete(objResp.toString());
     }
 

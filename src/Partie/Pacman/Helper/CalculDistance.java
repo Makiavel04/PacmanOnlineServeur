@@ -8,8 +8,8 @@ import java.util.Queue;
 import Partie.Pacman.Agents.AgentAction;
 import Partie.Pacman.Agents.AgentGhost;
 import Partie.Pacman.Agents.AgentPacman;
-import Partie.Pacman.Agents.PositionAgent;
 import Partie.Pacman.Game.PacmanGame;
+import pacman.online.commun.moteur.PositionAgent;
 
 /**Ensemble de fonctions de calcul ou vérification de distance */
 public class CalculDistance {

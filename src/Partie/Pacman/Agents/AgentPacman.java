@@ -2,6 +2,7 @@ package Partie.Pacman.Agents;
 
 import Partie.Pacman.Game.PacmanGame;
 import Partie.Pacman.Helper.CalculDistance;
+import pacman.online.commun.moteur.PositionAgent;
 
 /**
  * personnage Pacman

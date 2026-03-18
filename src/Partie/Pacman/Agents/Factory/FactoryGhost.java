@@ -1,7 +1,7 @@
 package Partie.Pacman.Agents.Factory;
 
 import Partie.Pacman.Agents.AgentGhost;
-import Partie.Pacman.Agents.PositionAgent;
+import pacman.online.commun.moteur.PositionAgent;
 
 /** fabrique de fantômes */
 public class FactoryGhost implements FactoryAgent{

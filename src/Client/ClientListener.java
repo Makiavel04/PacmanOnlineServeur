@@ -7,7 +7,7 @@ import java.net.Socket;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import Ressources.RequetesJSON;
+import pacman.online.commun.dto.RequetesJSON;
 
 public class ClientListener extends Thread {
 

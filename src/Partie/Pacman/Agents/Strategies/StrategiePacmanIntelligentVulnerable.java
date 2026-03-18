@@ -7,9 +7,9 @@ import java.util.Queue;
 import Partie.Pacman.Agents.Agent;
 import Partie.Pacman.Agents.AgentAction;
 import Partie.Pacman.Agents.AgentGhost;
-import Partie.Pacman.Agents.PositionAgent;
 import Partie.Pacman.Game.PacmanGame;
 import Partie.Pacman.Helper.CalculDistance;
+import pacman.online.commun.moteur.PositionAgent;
 
 /** Stratégie de pacman intelligent quand il est vunérable */
 public class StrategiePacmanIntelligentVulnerable extends Strategie {

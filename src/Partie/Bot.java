@@ -1,21 +1,22 @@
 package Partie;
 
 import Partie.Pacman.Agents.Agent;
-import Partie.Pacman.Agents.TypeAgent;
 import Partie.Pacman.Agents.Strategies.Strategie;
 import Partie.Pacman.Agents.Strategies.TypeStrategie;
-import Ressources.EtatLobby.DetailsJoueur;
+import pacman.online.commun.dto.lobby.DetailsJoueur;
+import pacman.online.commun.moteur.TypeAgent;
+
 /**
  * Classe représentant un bot dans une partie de Pacman.
  */
 public class Bot implements Joueur {
-    /**Agent du bot */
+    /** Agent du bot */
     Agent agent;
-    /**Type de la stratégie du bot */
+    /** Type de la stratégie du bot */
     TypeStrategie typeStrategie;
-    /**Type de l'agent du bot */
+    /** Type de l'agent du bot */
     TypeAgent typeAgent;
-    /**Numéro du bot */
+    /** Numéro du bot */
     int numBot;
 
     public Bot(int num, TypeAgent typeAgent, TypeStrategie typeStrategie) {
@@ -46,21 +47,30 @@ public class Bot implements Joueur {
 
     @Override
     public Strategie getStrategie() {
-        if(this.agent != null) {
+        if (this.agent != null) {
             return this.agent.getStrategie();
-        }else {
+        } else {
             return null;
         }
     }
 
     @Override
     public DetailsJoueur getDetailsJoueur() {
-        return new DetailsJoueur(this.getId(), this.getNom(), this.typeAgent, this.isBot(), this.getTypeStrategie().name());
+        return new DetailsJoueur(this.getId(), this.getNom(), this.typeAgent, this.isBot(),
+                this.getTypeStrategie().name());
+    }
+
+    public String getCouleur()  {
+        if (typeAgent == TypeAgent.PACMAN) {
+            return "#40E0D0";
+        } else {
+            return "#7d669e";
+        }
     }
 
     public int getId() {
         return -this.numBot;
-    }   
+    }
 
     public int getNumBot() {
         return numBot;
@@ -73,7 +83,7 @@ public class Bot implements Joueur {
     public boolean isBot() {
         return true;
     }
-     
+
     /**
      * Gestion de la fin de partie pour le bot.
      */

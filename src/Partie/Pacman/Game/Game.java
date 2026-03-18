@@ -2,14 +2,14 @@ package Partie.Pacman.Game;
 
 
 import Partie.Lobby;
-import Ressources.EtatGame.EtatGame;
+import pacman.online.commun.dto.game.EtatGame;
 
 /**
  * Classe de jeu abstraite
- */
+ */  
 public abstract class Game implements Runnable{
-    int turn;
-    int maxTurn;
+    int turn; 
+    int maxTurn; 
     boolean isRunning;
     int intervalle;
     /** intervalle par defaut entre 2 tours */
@@ -52,9 +52,11 @@ public abstract class Game implements Runnable{
      * Faire un tour de jeu
      */
     public void step(){
-        if((this.turn<=this.maxTurn) && gameContinue()){
+        if((this.turn<=this.maxTurn) && this.gameContinue() && this.isRunning){
             this.turn += 1;
             this.takeTurn();
+        }else if(!this.isRunning){//On veut éviter le signal du gameOver si le jeu a été arrêté manuellement
+            System.out.println("Jeu arrêté manuellement. Passe le tour en cours.");
         }else{
             this.isRunning = false;
             this.gameOver();
@@ -73,7 +75,7 @@ public abstract class Game implements Runnable{
     public void run(){
         while(this.isRunning()){
             this.step();
-            this.lobby.notifierTour(this.getEtat());
+            if(this.isRunning()) this.lobby.notifierTour(this.getEtat()); //Condition evite de notifier un tour si le jeu a été arrêté pendant le step (ex: fin de partie, arrêt manuel)
             try{
                 Thread.sleep(this.intervalle);
             }catch(InterruptedException e){
@@ -81,6 +83,13 @@ public abstract class Game implements Runnable{
             }
 
         }
+    }
+
+    /**
+     * Arrete le jeu
+     */
+    public void stop(){
+        this.isRunning = false;
     }
 
     /** Initialise les attributs propre au jeu */

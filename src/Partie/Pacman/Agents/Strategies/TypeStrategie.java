@@ -3,7 +3,7 @@ package Partie.Pacman.Agents.Strategies;
 import java.util.Arrays;
 import java.util.List;
 
-import Partie.Pacman.Agents.TypeAgent;
+import pacman.online.commun.moteur.TypeAgent;
 
 public enum TypeStrategie {
     IMMOBILE(true, TypeAgent.PACMAN, TypeAgent.FANTOME),

@@ -5,8 +5,11 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Queue;
 
+import Partie.Joueur;
 import Partie.Pacman.Agents.Strategies.Strategie;
 import Partie.Pacman.Game.PacmanGame;
+import pacman.online.commun.moteur.EtatAgent;
+import pacman.online.commun.moteur.PositionAgent;
 
 /** Personnage du jeu */
 public abstract class Agent {
@@ -18,11 +21,21 @@ public abstract class Agent {
     protected Strategie strat;
     /** Agent vivant ou non */
     protected boolean mort;
+    /** Joueur associé à l'agent */
+    protected Joueur joueur;
 
     public Agent(PositionAgent pos){
         this.posActuel = pos;
         this.posInit = new PositionAgent(pos.getX(), pos.getY(), pos.getDir());
         this.mort = false;
+    }
+
+    public EtatAgent getEtatAgent(){
+        return new EtatAgent(this.joueur.getId(), posActuel, this.joueur.getCouleur());
+    }
+
+    public void setJoueur(Joueur j){
+        this.joueur = j;
     }
 
     public PositionAgent getPosition(){

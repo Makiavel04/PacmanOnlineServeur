@@ -3,10 +3,10 @@ package Partie.Pacman.Agents.Strategies.GhostOriginaux;
 import Partie.Pacman.Agents.Agent;
 import Partie.Pacman.Agents.AgentAction;
 import Partie.Pacman.Agents.AgentPacman;
-import Partie.Pacman.Agents.PositionAgent;
 import Partie.Pacman.Agents.Strategies.StrategieAleatoire;
 import Partie.Pacman.Game.PacmanGame;
 import Partie.Pacman.Helper.CalculDistance;
+import pacman.online.commun.moteur.PositionAgent;
 /**Strategie classique Pinky */
 public class StrategieGhostPinky extends StrategieGhostOriginal {
 

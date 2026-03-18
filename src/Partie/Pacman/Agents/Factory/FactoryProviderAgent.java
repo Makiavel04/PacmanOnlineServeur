@@ -2,7 +2,7 @@ package Partie.Pacman.Agents.Factory;
 
 import java.util.Map;
 
-import Partie.Pacman.Agents.TypeAgent;
+import pacman.online.commun.moteur.TypeAgent;
 
 /** Fournisseur de fabrique d'agents */
 public class FactoryProviderAgent {

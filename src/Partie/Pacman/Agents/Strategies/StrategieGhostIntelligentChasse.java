@@ -7,8 +7,8 @@ import java.util.Queue;
 import Partie.Pacman.Agents.Agent;
 import Partie.Pacman.Agents.AgentAction;
 import Partie.Pacman.Agents.AgentPacman;
-import Partie.Pacman.Agents.PositionAgent;
 import Partie.Pacman.Game.PacmanGame;
+import pacman.online.commun.moteur.PositionAgent;
 
 /**Stratégie de chasse pour fantôme */
 public class StrategieGhostIntelligentChasse extends Strategie {

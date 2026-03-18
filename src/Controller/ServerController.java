@@ -5,30 +5,32 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Vector;
 
-
 import Client.ClientHandler;
 import Partie.Lobby;
 
 /**
- * Classe principale du serveur, elle gère les connexions des clients, les lobbies et la communication avec les clients.
+ * Classe principale du serveur, elle gère les connexions des clients, les
+ * lobbies et la communication avec les clients.
  */
 public class ServerController {
     private int port;
     private ServerSocket ecoute;
-    /**Liste des clients connectés au serveur */
+    /** Liste des clients connectés au serveur */
     private Vector<ClientHandler> clients;
-    /**Liste des lobbies actifs sur le serveur */
+    /** Liste des lobbies actifs sur le serveur */
     private Vector<Lobby> lobbies;
 
-    public ServerController(int p){
+    public ServerController(int p) {
         this.port = p;
         this.clients = new Vector<ClientHandler>();
         this.lobbies = new Vector<Lobby>();
         System.out.println("Serveur mis en place");
-    } 
+    }
 
     /**
-     * Lance le serveur et gère les connexions entrantes des clients. Pour chaque client qui se connecte, un nouveau ClientHandler est créé pour gérer la communication avec ce client.
+     * Lance le serveur et gère les connexions entrantes des clients. Pour chaque
+     * client qui se connecte, un nouveau ClientHandler est créé pour gérer la
+     * communication avec ce client.
      */
     public void launch() {
         try {
@@ -42,40 +44,44 @@ public class ServerController {
                 synchronized (this.clients) {
                     this.clients.add(clientHandler);
                 }
-                int idClient = clientHandler.getID();
-                System.out.println("Nouveau client#"+ idClient +" sur le serveur");
+                int idClient = clientHandler.getId();
+                System.out.println("Nouveau client#" + idClient + " sur le serveur");
             }
         } catch (IOException e) {
-            System.out.println("Problème serveur :\n"+ e);
+            System.out.println("Problème serveur :\n" + e);
         }
     }
-    
+
     /** Vérifie si authentification valide */
     public boolean demandeAuthentification(String username, String password) {
         return true;
     }
 
     /** Fournit la liste des lobbies actifs */
-    public Vector<Lobby> listerLobbies(){
-        synchronized(this.lobbies){
-            return new Vector<>(this.lobbies); //Eviter de retourner la référence directe à la liste des lobbies pour éviter les problèmes de concurrence
+    public Vector<Lobby> listerLobbies() {
+        synchronized (this.lobbies) {
+            return new Vector<>(this.lobbies); // Eviter de retourner la référence directe à la liste des lobbies pour
+                                               // éviter les problèmes de concurrence
         }
     }
 
     /**
      * Gère la demande de match d'un client.
-     * @param client Le client qui fait la demande de match
-     * @param idLobby L'identifiant du lobby à rejoindre, ou -1 pour en créer un nouveau
+     * 
+     * @param client  Le client qui fait la demande de match
+     * @param idLobby L'identifiant du lobby à rejoindre, ou -1 pour en créer un
+     *                nouveau
      * @return Le lobby auquel le client a été connecté ou créé
-      * @throws Exception Si le lobby spécifié n'existe pas ou si la connexion au lobby échoue
+     * @throws Exception Si le lobby spécifié n'existe pas ou si la connexion au
+     *                   lobby échoue
      */
     public Lobby demandeDeMatch(ClientHandler client, int idLobby) throws Exception {
-        try{
+        try {
             Lobby lobbyFound;
             synchronized (this.lobbies) {
-                if(idLobby == -1) {
+                if (idLobby == -1) {
                     lobbyFound = this.creerLobby(client);
-                }else{
+                } else {
                     lobbyFound = this.getLobby(idLobby);
                     if (lobbyFound == null) {
                         throw new Exception("Lobby#" + idLobby + " non trouvé.");
@@ -91,9 +97,13 @@ public class ServerController {
     }
 
     /**
-     * Vérifie si les conditions de lancement d'une partie sont remplies dans un lobby donné, et si c'est le cas, lance la partie.
-     * @param idLobby L'identifiant du lobby pour lequel vérifier le lancement de la partie
-     * @param idClient L'identifiant du client qui demande le lancement de la partie (hôte normalement)
+     * Vérifie si les conditions de lancement d'une partie sont remplies dans un
+     * lobby donné, et si c'est le cas, lance la partie.
+     * 
+     * @param idLobby  L'identifiant du lobby pour lequel vérifier le lancement de
+     *                 la partie
+     * @param idClient L'identifiant du client qui demande le lancement de la partie
+     *                 (hôte normalement)
      */
     public void verifierLancementMatch(int idLobby, int idClient) {
         synchronized (this.lobbies) {
@@ -107,11 +117,13 @@ public class ServerController {
     }
 
     /**
-     * Crée un nouveau lobby avec le client spécifié comme hôte, ajoute ce lobby à la liste des lobbies actifs et retourne le lobby créé.
+     * Crée un nouveau lobby avec le client spécifié comme hôte, ajoute ce lobby à
+     * la liste des lobbies actifs et retourne le lobby créé.
+     * 
      * @param client client qui demande la création du lobby et qui en sera l'hôte
      * @return Le lobby nouvellement créé
      */
-    public Lobby creerLobby (ClientHandler client) {
+    public Lobby creerLobby(ClientHandler client) {
         Lobby lobby = new Lobby(client, this);
         synchronized (this.lobbies) {
             this.lobbies.add(lobby);
@@ -120,34 +132,38 @@ public class ServerController {
     }
 
     /**
-     * Connecte un client à un lobby donné en appelant la méthode de connexion du lobby. 
+     * Connecte un client à un lobby donné en appelant la méthode de connexion du
+     * lobby.
+     * 
      * @param client Le client à connecter au lobby
-     * @param lobby Le lobby auquel connecter le client
-     * @throws Exception Si la connexion du client au lobby échoue 
+     * @param lobby  Le lobby auquel connecter le client
+     * @throws Exception Si la connexion du client au lobby échoue
      */
-    public void connectionLobby (ClientHandler client, Lobby lobby) throws Exception {
-        try{
+    public void connectionLobby(ClientHandler client, Lobby lobby) throws Exception {
+        try {
             synchronized (this.lobbies) {
                 lobby.connectClient(client);
             }
-            System.out.println("Client#" + client.getID() +" connecté au lobby#" + lobby.getID());
+            System.out.println("Client#" + client.getId() + " connecté au lobby#" + lobby.getId());
         } catch (Exception e) {
-            System.out.println("Erreur lors de la connexion du client#" + client.getID() + " au lobby#" + lobby.getID() + " : " + e.getMessage());
+            System.out.println("Erreur lors de la connexion du client#" + client.getId() + " au lobby#" + lobby.getId()
+                    + " : " + e.getMessage());
             throw e;
         }
     }
 
     /**
      * Récupére le client par son id
+     * 
      * @param idClient id du client à récupérer
      * @return le client trouvé ou null si aucun client ne correspond à cet id
      */
     public ClientHandler getClient(int idClient) {
-        synchronized (this.clients){    
+        synchronized (this.clients) {
             for (int i = 0; i < clients.size(); i++) {
-                if (clients.get(i).getID() == idClient) {
+                if (clients.get(i).getId() == idClient) {
                     return clients.get(i);
-                }        
+                }
             }
             return null;
         }
@@ -155,15 +171,16 @@ public class ServerController {
 
     /**
      * Récupére le lobby par son id
+     * 
      * @param idLobby id du lobby à récupérer
      * @return le lobby trouvé ou null si aucun lobby ne correspond à cet id
      */
     public Lobby getLobby(int idLobby) {
-        synchronized (this.lobbies){    
+        synchronized (this.lobbies) {
             for (int i = 0; i < lobbies.size(); i++) {
-                if (lobbies.get(i).getID() == idLobby) {
+                if (lobbies.get(i).getId() == idLobby) {
                     return lobbies.get(i);
-                }        
+                }
             }
             return null;
         }
@@ -171,22 +188,24 @@ public class ServerController {
 
     /**
      * Retire un client du serveur
+     * 
      * @param idClient L'identifiant du client à retirer
      */
-    public void removeClient(int idClient){
+    public void removeClient(int idClient) {
         synchronized (this.clients) {
-            this.clients.removeIf(client -> client.getID() == idClient);
+            this.clients.removeIf(client -> client.getId() == idClient);
         }
         System.out.println("Client#" + idClient + " supprimé avec succès");
     }
 
     /**
      * Retire un lobby du serveur
+     * 
      * @param idLobby L'identifiant du lobby à retirer
      */
-    public void removeLobby(int idLobby){
+    public void removeLobby(int idLobby) {
         synchronized (this.lobbies) {
-            this.lobbies.removeIf(lobby -> lobby.getID() == idLobby);
+            this.lobbies.removeIf(lobby -> lobby.getId() == idLobby);
         }
         System.out.println("Lobby#" + idLobby + " supprimé avec succès");
     }
@@ -194,6 +213,7 @@ public class ServerController {
     public synchronized Vector<Lobby> getLobbies() {
         return lobbies;
     }
+
     public synchronized Vector<ClientHandler> getClients() {
         return clients;
     }

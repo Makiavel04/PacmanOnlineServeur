@@ -1,7 +1,7 @@
 package Partie.Pacman.Agents.Factory;
 
 import Partie.Pacman.Agents.Agent;
-import Partie.Pacman.Agents.PositionAgent;
+import pacman.online.commun.moteur.PositionAgent;
 
 /** Interface de fabrique d'agents */
 public interface FactoryAgent {

@@ -12,13 +12,15 @@ import Partie.Pacman.Agents.Agent;
 import Partie.Pacman.Agents.AgentAction;
 import Partie.Pacman.Agents.AgentGhost;
 import Partie.Pacman.Agents.AgentPacman;
-import Partie.Pacman.Agents.PositionAgent;
-import Partie.Pacman.Agents.TypeAgent;
 import Partie.Pacman.Agents.Factory.FactoryProviderAgent;
 import Partie.Pacman.Agents.Strategies.Strategie;
 import Partie.Pacman.Agents.Strategies.TypeStrategie;
 import Partie.Pacman.Agents.Strategies.Factory.FactoryProviderStrategie;
-import Ressources.EtatGame.EtatPacmanGame;
+import pacman.online.commun.dto.game.EtatPacmanGame;
+import pacman.online.commun.moteur.EtatAgent;
+import pacman.online.commun.moteur.Maze;
+import pacman.online.commun.moteur.PositionAgent;
+import pacman.online.commun.moteur.TypeAgent;
 
 /**
  * Jeu de pacman
@@ -182,6 +184,7 @@ public class PacmanGame extends Game{
             g.setStrategie(s); //Affectation de la strat à l'agent
 
             jFantomes.get(i).initJoueur(g); //Initialisation du joueur avec l'agent
+            g.setJoueur(jFantomes.get(i));
             addAgent(g); //Ajout de l'agent à la liste d'agents
         }
         for(int i=0; i<this.labyrinthe.getPacman_start().size(); ++i){
@@ -191,9 +194,21 @@ public class PacmanGame extends Game{
             m.setStrategie(s); //Affectation de la strat à l'agent
     
             jPacmans.get(i).initJoueur(m); //Initialisation du joueur avec l'agent
+            m.setJoueur(jPacmans.get(i)); //Affectation du joueur à l'agent
             addAgent(m); //Ajout de l'agent à la liste d'agents
         }
 
+        //this.actualiserLabyrinthe(); //Actualisation du labyrinthe pour prendre en compte les agents
+
+        ArrayList<EtatAgent> etatsP = getPacmansEvenDead().stream()
+            .map(Agent::getEtatAgent)
+            .collect(Collectors.toCollection(ArrayList::new));
+        this.labyrinthe.setEtat_pacmans(etatsP);
+
+        ArrayList<EtatAgent> etatsG = getGhostsEvenDead().stream()
+            .map(Agent::getEtatAgent)
+            .collect(Collectors.toCollection(ArrayList::new));
+        this.labyrinthe.setEtat_ghosts(etatsG);
         System.out.println("Jeu initialisé.");
     }
 
@@ -460,10 +475,11 @@ public class PacmanGame extends Game{
      * Actualiser les positions des agents pour le labyrinthe
      */
     public void actualiserLabyrinthe(){
-        ArrayList<PositionAgent> positionsPacman = getPacmans().stream().map(Agent::getPosition).collect(Collectors.toCollection(ArrayList::new)); //Liste de position des Pacmans
-        this.labyrinthe.setPacman_start(positionsPacman);
-        ArrayList<PositionAgent> positionsGhost = getGhosts().stream().map(Agent::getPosition).collect(Collectors.toCollection(ArrayList::new)); //Liste de position des Ghosts
-        this.labyrinthe.setGhosts_start(positionsGhost);
+        ArrayList<EtatAgent> etatsPacman = getPacmans().stream().map(Agent::getEtatAgent).collect(Collectors.toCollection(ArrayList::new)); //Liste de position des Pacmans
+        this.labyrinthe.setEtat_pacmans(etatsPacman);
+
+        ArrayList<EtatAgent> etatsGhost = getGhosts().stream().map(Agent::getEtatAgent).collect(Collectors.toCollection(ArrayList::new)); //Liste de position des Ghosts
+        this.labyrinthe.setEtat_ghosts(etatsGhost);
     }
 
     /**
