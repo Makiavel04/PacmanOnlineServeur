@@ -7,6 +7,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import Controller.ServerController;
+import Controller.http.AuthResult;
 import Partie.Joueur;
 import Partie.Lobby;
 import Partie.Pacman.Agents.Agent;
@@ -41,7 +42,7 @@ public class ClientHandler implements Joueur{
     private Agent agent;
 
     public ClientHandler(Socket so, ServerController sc) {
-        this.idClient = ++ClientHandler.idCpt;
+        this.idClient = 0;
         this.serverController = sc;
         this.lobby = null;
         this.so = so;
@@ -54,6 +55,10 @@ public class ClientHandler implements Joueur{
     //--- Getters et setters ---
     public int getId() {
         return this.idClient;
+    }
+
+    public void setId(int id) {
+        this.idClient = id;
     }
     
     public String getUsername() {
@@ -192,19 +197,25 @@ public class ClientHandler implements Joueur{
      * @param objReq corps de la requête
      */
     public void demanderAuthentification(JSONObject objReq) {
-        String username = objReq.getString(RequetesJSON.Attributs.AuthentificationAttr.USERNAME);
-        String password = objReq.getString(RequetesJSON.Attributs.AuthentificationAttr.PASSWORD);
-        boolean authResult = this.serverController.demandeAuthentification(username, password);
-        System.out.println("Resultat d'authentification pour le client#" + idClient + " : " + authResult);
+        String username = objReq.getString(RequetesJSON.Attributs.AuthentificationAttr.PSEUDO);
+        String password = objReq.getString(RequetesJSON.Attributs.AuthentificationAttr.MOT_DE_PASSE);
+        AuthResult authResult = this.serverController.demandeAuthentification(username, password);
         JSONObject objResp = new JSONObject();
         objResp.put(RequetesJSON.Attributs.ACTION, RequetesJSON.RES_AUTHENTIFICATION);
-        objResp.put(RequetesJSON.Attributs.AuthentificationAttr.USERNAME, username);
-        objResp.put(RequetesJSON.Attributs.AuthentificationAttr.ID_CLIENT, idClient);
-        objResp.put(RequetesJSON.Attributs.AuthentificationAttr.RESULTAT, authResult);
-        if(authResult) {
-            this.setUsername(username);
-            this.setCouleur("#09ff00"); //Changer la couleur en foncitn de celle active
+        objResp.put(RequetesJSON.Attributs.AuthentificationAttr.RESULTAT, authResult.result);
+
+
+        if(authResult.result){
+            objResp.put(RequetesJSON.Attributs.AuthentificationAttr.PSEUDO, authResult.username);
+            objResp.put(RequetesJSON.Attributs.AuthentificationAttr.ID_JOUEUR, authResult.id);
+            this.setId(authResult.id);
+            this.setUsername(authResult.username);
+            this.setCouleur(authResult.couleur);
+
+        }else{
+            objResp.put(RequetesJSON.Attributs.AuthentificationAttr.ERREUR, authResult.erreur);
         }
+        System.out.println("Resultat d'authentification pour le client#" + idClient + " : " + authResult.result);
         this.issuer.envoyerRequete(objResp.toString());
     }
 

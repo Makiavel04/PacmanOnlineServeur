@@ -6,6 +6,9 @@ import java.net.Socket;
 import java.util.Vector;
 
 import Client.ClientHandler;
+import Controller.http.AuthResult;
+import Controller.http.PartieResult;
+import Controller.http.ServerHttpClient;
 import Partie.Lobby;
 
 /**
@@ -19,12 +22,15 @@ public class ServerController {
     private Vector<ClientHandler> clients;
     /** Liste des lobbies actifs sur le serveur */
     private Vector<Lobby> lobbies;
+    /** Objet chargé des communications HTTP */
+    private ServerHttpClient httpClient;
 
-    public ServerController(int p) {
+    public ServerController(int p, String uri_api) {
         this.port = p;
         this.clients = new Vector<ClientHandler>();
         this.lobbies = new Vector<Lobby>();
         System.out.println("Serveur mis en place");
+        this.httpClient = new ServerHttpClient(uri_api);
     }
 
     /**
@@ -53,15 +59,20 @@ public class ServerController {
     }
 
     /** Vérifie si authentification valide */
-    public boolean demandeAuthentification(String username, String password) {
-        return true;
+    public AuthResult demandeAuthentification(String username, String password) {
+        AuthResult authResult = this.httpClient.demandeConnexion(username, password);
+        if(authResult.result && this.clients.stream().anyMatch(element -> element.getId() == authResult.id)){ //Si id est déja dans le serveur, on refuse la connexion
+            authResult.result = false;
+            authResult.erreur = "Joueur déjà connecté sur le serveur";
+        } 
+
+        return authResult;
     }
 
     /** Fournit la liste des lobbies actifs */
     public Vector<Lobby> listerLobbies() {
         synchronized (this.lobbies) {
-            return new Vector<>(this.lobbies); // Eviter de retourner la référence directe à la liste des lobbies pour
-                                               // éviter les problèmes de concurrence
+            return new Vector<>(this.lobbies); // Eviter de retourner la référence directe à la liste des lobbies pour éviter les problèmes de concurrence
         }
     }
 
@@ -150,6 +161,10 @@ public class ServerController {
                     + " : " + e.getMessage());
             throw e;
         }
+    }
+
+    public void envoyerResultat(PartieResult resultat){
+        this.httpClient.envoiScore(resultat);
     }
 
     /**

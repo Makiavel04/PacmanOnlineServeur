@@ -10,6 +10,7 @@ import org.json.JSONObject;
 
 import Client.ClientHandler;
 import Controller.ServerController;
+import Controller.http.PartieResult;
 import Partie.Pacman.Agents.Strategies.TypeStrategie;
 import Partie.Pacman.Game.PacmanGame;
 import pacman.online.commun.dto.RequetesJSON;
@@ -421,6 +422,24 @@ public class Lobby {
                 bot.finPartie();// Réinit le bot
             }
         }
+
+        this.serverController.envoyerResultat(this.resultatPartie());
+    }
+    
+    public PartieResult resultatPartie(){
+        ArrayList<Integer> idPacmans = new ArrayList<>();
+        ArrayList<Integer> idFantomes = new ArrayList<>();
+        synchronized(this.clients){
+            for(ClientHandler cli : this.clients){
+                if(cli.getTypeAgent()==TypeAgent.PACMAN) idPacmans.add(cli.getId()); 
+                else idFantomes.add(cli.getId());
+            }
+        }
+
+        String vainqueur;
+        if(this.game.getVainqueur() == TypeAgent.PACMAN) vainqueur = "P";
+        else vainqueur = "F";
+        return new PartieResult(this.game.getScorePacman(), this.game.getScoreGhost(), idPacmans, idFantomes, vainqueur);
     }
 
     /**
