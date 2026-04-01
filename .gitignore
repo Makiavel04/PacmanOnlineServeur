@@ -1,7 +1,9 @@
 # --- Compilation ---
 # Ignore le dossier bin qui contient les fichiers .class
 /bin/
-
+/build_server/
+ServeurComplet.jar
+stub_server.sh
 # --- Bibliothèques ---
 # Ignore les dépendances externes (souvent gérées à part ou via un outil de build)
 /lib/

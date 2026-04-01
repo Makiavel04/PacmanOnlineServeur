@@ -1,12 +1,16 @@
 package Controller.http;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.util.ArrayList;
+import java.security.KeyStore;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -35,6 +39,41 @@ public class ServerHttpClient {
     public ServerHttpClient(String uri){
         this.httpClient = HttpClient.newBuilder().build();
         this.uri_api = uri;
+
+        //Le serveur est configuré avec une clé JKS, pour permettre le certificat HTTPS, cependant, comme celui-ci n'est pas reconnu par java, le serveur de jeu ne peut pas contacter l'api sans approuver le certificat.
+        //Pour permettre cela, il faudrait utiliser le certificat public qui a été mis dans le dossier /resources/ du serveur. Cependant pour éviter les bugs pendant la présentation ou lors ce que le professeur corrigera, nous avons préféré laisser le code de redirection obligatoire sur le port https en commentaire dans le web.xml, et permettre ainsi au serveur de jeu de contacter l'api via http.
+
+        // try {
+        //     // 1. Charger le fichier JKS depuis les ressources du projet
+        //     char[] password = "ton_password".toCharArray();
+        //     KeyStore trustStore = KeyStore.getInstance("JKS");
+            
+        //     // getClass().getResourceAsStream permet de lire le fichier même s'il est emballé dans un JAR
+        //     try (InputStream is = getClass().getResourceAsStream("/clientTrust.jks")) {
+        //         if (is == null) {
+        //             throw new Exception("Le fichier clientTrust.jks est introuvable dans les ressources !");
+        //         }
+        //         trustStore.load(is, password);
+        //     }
+
+        //     // 2. Initialiser le TrustManager avec notre JKS
+        //     TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        //     tmf.init(trustStore);
+
+        //     // 3. Créer le SSLContext
+        //     SSLContext sslContext = SSLContext.getInstance("TLS");
+        //     sslContext.init(null, tmf.getTrustManagers(), new java.security.SecureRandom());
+
+        //     // 4. Créer le HttpClient qui utilise ce contexte
+        //     this.httpClient = HttpClient.newBuilder()
+        //             .sslContext(sslContext)
+        //             .build();
+                    
+        //     System.out.println("Client HTTP sécurisé initialisé avec succès.");
+
+        // } catch (Exception e) {
+        //     throw new RuntimeException("Erreur fatale : Impossible de sécuriser la connexion API", e);
+        // }
     }
 
 

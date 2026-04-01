@@ -12,9 +12,9 @@ public class ServeurPacman {
         int port = portSaisie.isBlank() ? 50000 : Integer.parseInt(portSaisie.trim());
         
         //URL
-        System.out.print("Entrez l'URL du serveur web pour accéder aux fonctions api (défaut : http://localhost:8080/Pacmanweb/api) : ");
+        System.out.print("Entrez l'URL du serveur web pour accéder aux fonctions api (défaut : http://localhost:8080/PacmanWeb/api) : ");
         String urlSaisie = sc.nextLine();
-        String url = urlSaisie.isBlank() ? "http://localhost:8080/Pacmanweb/api" : urlSaisie.trim();
+        String url = urlSaisie.isBlank() ? "http://localhost:8080/PacmanWeb/api" : urlSaisie.trim();
 
         System.out.println("\nConfiguration retenue :");
         System.out.println(" > Port Jeu : " + port);
